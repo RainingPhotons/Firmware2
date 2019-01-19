@@ -32,6 +32,35 @@ func wheel(WheelPos int, dim int) []byte {
 	return color
 }
 
+func rainbowCycle(conn net.Conn, wait int, cycles int, dim int) {
+	buf := make([]byte, 120*3)
+
+	for cycle := 0; cycle < cycles; cycle++ {
+		dir := rand.Intn(2)
+		k := 255
+
+		for j := 0; j < 256; j++ {
+			k = k - 1
+			for i := 0; i < 120; i++ {
+				if k < 0 {
+					k = 255
+				}
+				offset := j
+				if dir == 0 {
+					offset = k
+				}
+				ledColor := wheel(((i*256/120)+offset)%256, dim)
+				buf[(i*3)+0] = ledColor[0]
+				buf[(i*3)+1] = ledColor[1]
+				buf[(i*3)+2] = ledColor[2]
+			}
+
+			conn.Write(buf)
+			time.Sleep(time.Duration(wait) * time.Millisecond)
+		}
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -49,18 +78,9 @@ func main() {
 
 	defer conn.Close()
 
-	buf := make([]byte, 120*3)
 	dim := rand.Intn(2) + 4
-	for j := 0; j < 256; j++ {
-
-		for i := 0; i < 120; i++ {
-			ledColor := wheel(((i*256/120)+j)%256, dim)
-			buf[(i*3)+0] = ledColor[0]
-			buf[(i*3)+1] = ledColor[1]
-			buf[(i*3)+2] = ledColor[2]
-		}
-
-		conn.Write(buf)
-		time.Sleep(10 * time.Millisecond)
-	}
+	wait := rand.Intn(20) + 10
+	max_cycles := 8
+	cycles := rand.Intn(max_cycles) + 1
+	rainbowCycle(conn, wait, cycles, dim)
 }
