@@ -2,47 +2,65 @@ package main
 
 import (
 	"fmt"
-	"github.com/faiface/beep"
-	"github.com/faiface/beep/speaker"
-	"github.com/faiface/beep/wav"
+	"math/rand"
 	"net"
-	"os"
 	"time"
 )
 
+func wheel(WheelPos int, dim int) []byte{
+	r := 0
+	g := 0
+	b := 0
+	if 85 > WheelPos {
+		r = 0
+		g = WheelPos * 3/dim
+		b = (255 - WheelPos * 3)/dim
+	} else if 170 > WheelPos {
+		r = WheelPos * 3/dim
+		g = (255 - WheelPos * 3)/dim
+		b = 0
+	} else {
+		r = (255 - WheelPos * 3)/dim
+		g = 0
+		b = WheelPos * 3/dim
+	}
+
+	color := make([]byte, 3)
+	color[0] = byte(r)
+	color[1] = byte(g)
+	color[2] = byte(b)
+	return color
+}
+
 func main() {
-	LightAddr, err := net.ResolveUDPAddr("udp", "192.168.1.154:5000")
+	rand.Seed(time.Now().UnixNano())
+
+	LightAddr, err := net.ResolveUDPAddr("udp", "192.168.1.209:5000")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
 	}
-	ServerAddr, err := net.ResolveUDPAddr("udp", ":10001")
+
+	conn, err := net.DialUDP("udp", nil, LightAddr)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
 	}
-	ServerConn, err := net.ListenUDP("udp", ServerAddr)
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-	defer ServerConn.Close()
 
-	buf := make([]byte, 1024)
+	defer conn.Close()
 
-	sr := beep.SampleRate(48000)
-	speaker.Init(sr, sr.N(time.Second/10))
-	file, _ := os.Open("smw_1-up.wav")
-	streamer, _, _ := wav.Decode(file)
+	buf := make([]byte, 120 * 3)
+	dim := rand.Intn(2) + 4
+	for j := 0; j < 256; j++ {
 
-	for {
-		n, addr, err := ServerConn.ReadFromUDP(buf)
-		fmt.Println("Received ", string(buf[0:n]), " from ", addr)
-		streamer.Seek(0)
-		speaker.Play(streamer)
-		if err != nil {
-			fmt.Println("Error: ", err)
+		for i := 0; i < 120; i++ {
+			ledColor := wheel(((i * 256 / 120) + j) % 256, dim)
+			buf[(i * 3) + 0] = ledColor[0]
+			buf[(i * 3) + 1] = ledColor[1]
+			buf[(i * 3) + 2] = ledColor[2]
 		}
-		ServerConn.WriteToUDP(buf, LightAddr)
+
+		conn.Write(buf)
+		time.Sleep(10 * time.Millisecond)
 	}
 }
