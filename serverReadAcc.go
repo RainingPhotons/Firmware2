@@ -6,9 +6,16 @@ import (
     "encoding/binary"
     "time"
 )
- 
+
+const channelBufSize = 20
+
 type Position struct {
   x, y, z, counter int
+}
+
+type Delta struct {
+  xDiff, yDiff, zDiff int
+  boardAddr int16
 }
 
 func Abs(x int) int {
@@ -16,6 +23,13 @@ func Abs(x int) int {
         return -x
     }
     return x
+}
+
+func LEDOrch(recieved chan Delta) {
+	for {
+		delta = <-recieved
+		fmt.Println("no activity", delta)		
+	}
 }
 
 func main() {
@@ -26,7 +40,7 @@ func main() {
     
     const totalStrands = 20
     const callibrationTimeOut = 10
-    const movementTolarance = 100
+    const movementTolarance = 180
 
     buf := make([]byte, 8)
     defaultState := make([]Position, totalStrands)
@@ -50,7 +64,7 @@ func main() {
         _=err
         elapsed = time.Since(start)
              if elapsed.Seconds() > callibrationTimeOut{
-        break
+				break
         }
     }
 
@@ -60,23 +74,26 @@ func main() {
         defaultState[i].z = int(float32(defaultState[i].z) / float32(defaultState[i].counter))
     }
     fmt.Println("Accelerometer callibrated")
+	//End Averaging
+	
+	send := make(chan Delta, channelBufSize)//Data struct to send to the thread
+	go LEDOrch(send)
     for {
         n,addr,err := ServerConn.ReadFromUDP(buf)
         boardAddr := int16(binary.LittleEndian.Uint16(buf[0:]))% totalStrands
         
-        xDiff := Abs(int(int16(binary.LittleEndian.Uint16(buf[2:]))) - defaultState[boardAddr].x)
-        if xDiff > movementTolarance {
-            fmt.Println("Board ", boardAddr, "moved in x dir!!", xDiff)
-        }
-        yDiff := Abs(int(int16(binary.LittleEndian.Uint16(buf[4:]))) - defaultState[boardAddr].y)
-        if yDiff > movementTolarance {
-            fmt.Println("Board ", boardAddr, "moved in y dir!!", yDiff)
-        }
-        zDiff := Abs(int(int16(binary.LittleEndian.Uint16(buf[6:]))) - defaultState[boardAddr].z)
-        if zDiff > movementTolarance {
-            fmt.Println("Board ", boardAddr, "moved in z dir!!", zDiff)
-        }
-        defaultState[boardAddr].counter++
+        xDiff := int(int16(binary.LittleEndian.Uint16(buf[2:]))) - defaultState[boardAddr].x
+        yDiff := int(int16(binary.LittleEndian.Uint16(buf[4:]))) - defaultState[boardAddr].y
+        zDiff := int(int16(binary.LittleEndian.Uint16(buf[6:]))) - defaultState[boardAddr].z
+        if ((Abs(xDiff) > movementTolarance) || (Abs(yDiff) > movementTolarance) || (Abs(zDiff) > movementTolarance)){
+			var temp Delta
+			temp.boardAddr = boardAddr
+			temp.xDiff = xDiff
+			temp.yDiff = yDiff
+			temp.zDiff = zDiff
+			fmt.Println("sending something")
+			send <- temp
+		}
         //fmt.Println("Received addr, ",boardAddr, " ,x, ", defaultState[boardAddr].x , " y ", defaultState[boardAddr].y, " z ", defaultState[boardAddr].z , "Counter" , defaultState[boardAddr].counter)
         if err != nil {
             fmt.Println("Error: ",err)
