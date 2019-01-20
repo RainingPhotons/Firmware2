@@ -8,60 +8,6 @@ import (
 	"time"
 )
 
-func wheel(WheelPos int, dim int) []byte {
-	r := 0
-	g := 0
-	b := 0
-	if 85 > WheelPos {
-		r = 0
-		g = WheelPos * 3 / dim
-		b = (255 - WheelPos*3) / dim
-	} else if 170 > WheelPos {
-		r = WheelPos * 3 / dim
-		g = (255 - WheelPos*3) / dim
-		b = 0
-	} else {
-		r = (255 - WheelPos*3) / dim
-		g = 0
-		b = WheelPos * 3 / dim
-	}
-
-	color := make([]byte, 3)
-	color[0] = byte(r)
-	color[1] = byte(g)
-	color[2] = byte(b)
-	return color
-}
-
-func rainbowCycle(conn net.Conn, wait int, cycles int, dim int) {
-	buf := make([]byte, 120*3)
-
-	for cycle := 0; cycle < cycles; cycle++ {
-		dir := rand.Intn(2)
-		k := 255
-
-		for j := 0; j < 256; j++ {
-			k = k - 1
-			for i := 0; i < 120; i++ {
-				if k < 0 {
-					k = 255
-				}
-				offset := j
-				if dir == 0 {
-					offset = k
-				}
-				ledColor := wheel(((i*256/120)+offset)%256, dim)
-				buf[(i*3)+0] = ledColor[0]
-				buf[(i*3)+1] = ledColor[1]
-				buf[(i*3)+2] = ledColor[2]
-			}
-
-			conn.Write(buf)
-			time.Sleep(time.Duration(wait) * time.Millisecond)
-		}
-	}
-}
-
 func connectToStrand(hostOctet int) (net.Conn, error) {
 	ipaddr := "192.168.1." + strconv.Itoa(hostOctet) + ":5000"
 	LightAddr, err := net.ResolveUDPAddr("udp", ipaddr)
@@ -79,9 +25,45 @@ func connectToStrand(hostOctet int) (net.Conn, error) {
 	return conn, nil
 }
 
+const LEDCount = 120
+
 type strand struct {
 	host int
 	conn net.Conn
+}
+
+type rgb struct {
+	r byte
+	g byte
+	b byte
+}
+
+func rain(strands [3]strand, size int) {
+	matrix := make([][]byte, size)
+	wait := 100
+	for i := range matrix {
+		matrix[i] = make([]byte, LEDCount*3)
+	}
+
+	for c := 0; c < 5000; c++ {
+		for i := 0; i < size; i++ {
+			for j := ((LEDCount - 1) * 3); j > 0; j -= 3 {
+				matrix[i][j+0] = matrix[i][j-3+0]
+				matrix[i][j+1] = matrix[i][j-3+1]
+				matrix[i][j+2] = matrix[i][j-3+2]
+			}
+			if rand.Intn(5) == 0 {
+				matrix[i][1] = byte(rand.Intn(255))
+			} else {
+				matrix[i][1] = 0
+			}
+		}
+
+		for i := 0; i < size; i++ {
+			strands[i].conn.Write(matrix[i])
+		}
+		time.Sleep(time.Duration(wait) * time.Millisecond)
+	}
 }
 
 func main() {
@@ -95,11 +77,6 @@ func main() {
 		strands[i].conn, _ = connectToStrand(strands[i].host)
 
 		defer strands[i].conn.Close()
-
-		dim := rand.Intn(2) + 4
-		wait := rand.Intn(20) + 10
-		max_cycles := 8
-		cycles := rand.Intn(max_cycles) + 1
-		rainbowCycle(strands[i].conn, wait, cycles, dim)
 	}
+	rain(strands, len(strands))
 }
