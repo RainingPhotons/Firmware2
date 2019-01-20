@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
 	"time"
 )
 
@@ -61,26 +62,44 @@ func rainbowCycle(conn net.Conn, wait int, cycles int, dim int) {
 	}
 }
 
-func main() {
-	rand.Seed(time.Now().UnixNano())
-
-	LightAddr, err := net.ResolveUDPAddr("udp", "192.168.1.209:5000")
+func connectToStrand(hostOctet int) (net.Conn, error) {
+	ipaddr := "192.168.1." + strconv.Itoa(hostOctet) + ":5000"
+	LightAddr, err := net.ResolveUDPAddr("udp", ipaddr)
 	if err != nil {
 		fmt.Println("Error: ", err)
-		return
+		return nil, err
 	}
 
 	conn, err := net.DialUDP("udp", nil, LightAddr)
 	if err != nil {
 		fmt.Println("Error: ", err)
-		return
+		return nil, err
 	}
 
-	defer conn.Close()
+	return conn, nil
+}
 
-	dim := rand.Intn(2) + 4
-	wait := rand.Intn(20) + 10
-	max_cycles := 8
-	cycles := rand.Intn(max_cycles) + 1
-	rainbowCycle(conn, wait, cycles, dim)
+type strand struct {
+	host int
+	conn net.Conn
+}
+
+func main() {
+	rand.Seed(time.Now().UnixNano())
+	var strands [3]strand
+	strands[0].host = 209
+	strands[1].host = 205
+	strands[2].host = 218
+
+	for i := 0; i < len(strands); i++ {
+		strands[i].conn, _ = connectToStrand(strands[i].host)
+
+		defer strands[i].conn.Close()
+
+		dim := rand.Intn(2) + 4
+		wait := rand.Intn(20) + 10
+		max_cycles := 8
+		cycles := rand.Intn(max_cycles) + 1
+		rainbowCycle(strands[i].conn, wait, cycles, dim)
+	}
 }
