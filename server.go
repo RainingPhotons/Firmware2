@@ -42,21 +42,26 @@ func rain(strands [3]strand, size int) {
 	matrix := make([][]byte, size)
 	wait := 100
 	for i := range matrix {
-		matrix[i] = make([]byte, LEDCount*3)
+		matrix[i] = make([]byte, LEDCount*3*2+2)
 	}
 
 	for c := 0; c < 5000; c++ {
 		for i := 0; i < size; i++ {
-			for j := ((LEDCount - 1) * 3); j > 0; j -= 3 {
-				matrix[i][j+0] = matrix[i][j-3+0]
-				matrix[i][j+1] = matrix[i][j-3+1]
-				matrix[i][j+2] = matrix[i][j-3+2]
+			for k := 0; k < 2; k++ {
+				offset := k * LEDCount * 3
+				for j := ((LEDCount - 1) * 3); j > 0; j -= 3 {
+					matrix[i][j+0+offset] = matrix[i][j-3+0+offset]
+					matrix[i][j+1+offset] = matrix[i][j-3+1+offset]
+					matrix[i][j+2+offset] = matrix[i][j-3+2+offset]
+				}
+				if rand.Intn(5) == 0 {
+					matrix[i][1+offset] = byte(rand.Intn(255))
+				} else {
+					matrix[i][1+offset] = 0
+				}
 			}
-			if rand.Intn(5) == 0 {
-				matrix[i][1] = byte(rand.Intn(255))
-			} else {
-				matrix[i][1] = 0
-			}
+			matrix[i][720] = byte(c % 255)
+			matrix[i][721] = byte(255 - (c % 255))
 		}
 
 		for i := 0; i < size; i++ {
