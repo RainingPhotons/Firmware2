@@ -27,8 +27,12 @@ func Abs(x int) int {
 
 func LEDOrch(recieved chan Delta) {
 	for {
-		delta = <-recieved
-		fmt.Println("no activity", delta)		
+		delta := <-recieved
+		if delta.boardAddr == -1 {
+		fmt.Println("no activity")
+		} else {
+			fmt.Println("some activity", delta)
+		}
 	}
 }
 
@@ -78,6 +82,7 @@ func main() {
 	
 	send := make(chan Delta, channelBufSize)//Data struct to send to the thread
 	go LEDOrch(send)
+	var temp Delta
     for {
         n,addr,err := ServerConn.ReadFromUDP(buf)
         boardAddr := int16(binary.LittleEndian.Uint16(buf[0:]))% totalStrands
@@ -86,14 +91,18 @@ func main() {
         yDiff := int(int16(binary.LittleEndian.Uint16(buf[4:]))) - defaultState[boardAddr].y
         zDiff := int(int16(binary.LittleEndian.Uint16(buf[6:]))) - defaultState[boardAddr].z
         if ((Abs(xDiff) > movementTolarance) || (Abs(yDiff) > movementTolarance) || (Abs(zDiff) > movementTolarance)){
-			var temp Delta
 			temp.boardAddr = boardAddr
 			temp.xDiff = xDiff
 			temp.yDiff = yDiff
 			temp.zDiff = zDiff
 			fmt.Println("sending something")
-			send <- temp
+		} else {
+			temp.boardAddr = -1
+			temp.xDiff = 0
+			temp.yDiff = 0
+			temp.zDiff = 0
 		}
+		send <- temp
         //fmt.Println("Received addr, ",boardAddr, " ,x, ", defaultState[boardAddr].x , " y ", defaultState[boardAddr].y, " z ", defaultState[boardAddr].z , "Counter" , defaultState[boardAddr].counter)
         if err != nil {
             fmt.Println("Error: ",err)
