@@ -75,14 +75,12 @@ int effectMeteor(int iSocket, int broadcast, char * matrix) {
         }
         usleep(10000);
     }
-
-    printf("Complete\n");
     return 1;
 }
 
-int effectDefault(int iSocket, int broadcast, int pixel, char * matrix) 
+int effectDefault(int iSocket, int broadcast, char * matrix) 
 {
-    pixel = rand() % kLEDCnt;
+    int pixel = rand() % kLEDCnt;
     matrix[pixel * 3 + 0] = 0xff;
     matrix[pixel * 3 + 1] = 0x00;
     matrix[pixel * 3 + 2] = 0x00;

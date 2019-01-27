@@ -104,7 +104,6 @@ int createConnection(struct StrandParam_t * psStrandParam)
         pthread_exit(NULL);
     }
     char matrix[kLEDCnt * 3];
-    int pixel;
 
     for (int j = 0; j < kLEDCnt; ++j) 
     {
@@ -121,7 +120,7 @@ int createConnection(struct StrandParam_t * psStrandParam)
                 // abs(sMovementDelta4.fZDelta) > iMovementTolaranceZ)
         if (1 == sMovementDelta4.iBoardState)        
         {
-            if(effectMeteor(iSocket, psStrandParam->iBroadcastm matrix) < 0)
+            if(effectMeteor(iSocket, psStrandParam->iBroadcast, matrix) < 0)
             {
                 printf("Error with meteor effect on strand, %d\n", iBoardAddr);
             }
@@ -129,10 +128,11 @@ int createConnection(struct StrandParam_t * psStrandParam)
             sMovementDelta4.fYDelta = 0.0f;
             sMovementDelta4.fZDelta = 0.0f;
             sMovementDelta4.iBoardState = 0; // Set the board state to default after this
+            //Start iterating through other boards and change their status
         }
         else if (2 == sMovementDelta4.iBoardState)
         {
-            if(effectMeteorDown(iSocket, psStrandParam->iBroadcastm matrix) < 0)
+            if(effectMeteor(iSocket, psStrandParam->iBroadcast, matrix) < 0) //TODO change it meteor down
             {
                 printf("Error with meteor effect on strand, %d\n", iBoardAddr);
             }
@@ -143,7 +143,7 @@ int createConnection(struct StrandParam_t * psStrandParam)
         }
         else
         {
-            if(effectDefault(iSocket, psStrandParam->iBroadcast, pixel, matrix) < 0)
+            if(effectDefault(iSocket, psStrandParam->iBroadcast, matrix) < 0)
             {
                 printf("Error with meteor effect on strand, %d\n", iBoardAddr);
             }
