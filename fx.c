@@ -99,5 +99,4 @@ int effectDefault(int iSocket, int broadcast, char * matrix)
         fprintf(stderr, "Send failed");
         return -1;
     }
-    usleep(10000 + rand() % 90000);
 }
