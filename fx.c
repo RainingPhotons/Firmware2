@@ -48,7 +48,7 @@ int effectMeteor(int iSocket, int broadcast, char * matrix) {
     color.g = rand() % 255;
     color.b = rand() % 255;
 
-    for (o = 0; o < 3 * kLEDCnt; ++o) 
+    for (o = 0; o < (3 * kLEDCnt) - (30*3); ++o) // minus 10 for slightly earlier finish
     {
         int j = (int)(rate * o);
         for (int k = 0; k < kLEDCnt; ++k) 
@@ -73,7 +73,7 @@ int effectMeteor(int iSocket, int broadcast, char * matrix) {
             fprintf(stderr, "Send failed");
             return -1;
         }
-        usleep(10000);
+        usleep(8000);
     }
     return 1;
 }
