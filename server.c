@@ -49,6 +49,7 @@ struct MovementDelta_t
 struct StrandParam_t
 {
     int iBoardAddr;
+    int iBoardPhysicalLoc;
     int iBroadcast;
 };
 
@@ -96,12 +97,14 @@ int createConnection(int iBoardAddr)
 
  void *strand(void *params)
  {
-   // struct StrandParam_t * psStrandParam = (struct StrandParam_t *) params; 
-    int iBoardAddr = *((int*)params);//psStrandParam->iBoardAddr;
+    struct StrandParam_t * psStrandParam = (struct StrandParam_t *) params; 
+    int iBoardAddr = psStrandParam->iBoardAddr;
+    int iBoardPhysicalLoc = psStrandParam->iBoardPhysicalLoc;
     free(params);
     printf("Thread read ptr %p\n", params);
     printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
+    int iIdx;
     if (iSocket < 0)
     {
         printf("Socket connection failed for strand, %d", iBoardAddr);
@@ -133,17 +136,33 @@ int createConnection(int iBoardAddr)
             sMovementDelta[iBoardAddr].fZDelta = 0.0f;
             sMovementDelta[iBoardAddr].iBoardState = 0; // Set the board state to default after this
             //Start iterating through other boards and change their status
+             pthread_mutex_unlock(&lStrandLock[iBoardAddr]);
+            for(iIdx = iBoardPhysicalLoc; iIdx >= 0 ; iIdx--)
+            {
+                pthread_mutex_lock(&lStrandLock[m_aiActiveStrands[iIdx]]);
+                printf("Setting meteor down to strands, %d, boardNumber, %d\n", iIdx, m_aiActiveStrands[iIdx]);
+                sMovementDelta[m_aiActiveStrands[iIdx]].iBoardState = 2;
+                pthread_mutex_unlock(&lStrandLock[m_aiActiveStrands[iIdx]]);
+            }
+            for(iIdx = iBoardPhysicalLoc + 1; iBoardPhysicalLoc<ACTIVE_STRANDS;iIdx++)
+            {
+                pthread_mutex_lock(&lStrandLock[m_aiActiveStrands[iIdx]]); 
+                sMovementDelta[m_aiActiveStrands[iIdx]].iBoardState = 2;
+                printf("Setting meteor down to strands, %d, boardNumber, %d\n", iIdx, m_aiActiveStrands[iIdx]);
+                pthread_mutex_unlock(&lStrandLock[m_aiActiveStrands[iIdx]]);
+            }
         }
         else if (2 == sMovementDelta[iBoardAddr].iBoardState)
         {
-            if(effectMeteor(iSocket, 0, matrix) < 0) //TODO change it meteor down
+            if(effectMeteorDown(iSocket, 0, matrix) < 0) //TODO change it meteor down
             {
-                printf("Error with meteor effect on strand, %d\n", iBoardAddr);
+                printf("Error with meteor effect 2 on strand, %d\n", iBoardAddr);
             }
             sMovementDelta[iBoardAddr].fXDelta = 0.0f;
             sMovementDelta[iBoardAddr].fYDelta = 0.0f;
             sMovementDelta[iBoardAddr].fZDelta = 0.0f;
             sMovementDelta[iBoardAddr].iBoardState = 0; // Set the board state to default after this
+            pthread_mutex_unlock(&lStrandLock[iBoardAddr]);
         }
         else
         {
@@ -154,8 +173,8 @@ int createConnection(int iBoardAddr)
             sMovementDelta[iBoardAddr].fXDelta = 0.0f;
             sMovementDelta[iBoardAddr].fYDelta = 0.0f;
             sMovementDelta[iBoardAddr].fZDelta = 0.0f;
+            pthread_mutex_unlock(&lStrandLock[iBoardAddr]);
         }
-        pthread_mutex_unlock(&lStrandLock[iBoardAddr]);
         usleep(60000);
     }
     close(iSocket);
@@ -264,15 +283,19 @@ int main()
     printf("Strand initilization sucessful\n");
     for(iIdx = 0; iIdx < ACTIVE_STRANDS; iIdx++)
     {
-        int *arg = malloc(sizeof(*arg));
-        *arg = m_aiActiveStrands[iIdx];
+        // int *arg = malloc(sizeof(*arg));
+        // *arg = m_aiActiveStrands[iIdx];
+        struct StrandParam_t * psStrandParam = malloc(sizeof(struct StrandParam_t));
+        psStrandParam->iBoardAddr = m_aiActiveStrands[iIdx];
+        psStrandParam->iBoardPhysicalLoc = iIdx;
+        psStrandParam->iBroadcast = iBroadcast;
         if (pthread_mutex_init(&lStrandLock[iIdx], NULL) != 0)
         {
             printf("\n mutex init failed\n");
             return -1;
         }
-        printf("Launching thread, %d \n",  *arg);
-        iThreadId = pthread_create(&lStrand[iIdx], NULL, strand, arg);
+        
+        iThreadId = pthread_create(&lStrand[iIdx], NULL, strand, psStrandParam);
         if(iThreadId)
         {
             printf("Thread create error, %d\n", iThreadId);
@@ -300,18 +323,18 @@ int main()
             abs(sMovement.fYDelta) > iMovementTolaranceXY || 
             abs(sMovement.fZDelta) > iMovementTolaranceZ)
         {
-            printf("Movement Outside mutex: Board, %d, x, %f, y, %f, z, %f\n", iBoardAddr, 
-            sMovement.fXDelta,
-            sMovement.fYDelta,
-            sMovement.fZDelta);
-            pthread_mutex_lock(&lStrandLock[iBoardAddr]); 
+            // printf("Movement Outside mutex: Board, %d, x, %f, y, %f, z, %f\n", iBoardAddr, 
+            // sMovement.fXDelta,
+            // sMovement.fYDelta,
+            // sMovement.fZDelta);
+            // pthread_mutex_lock(&lStrandLock[iBoardAddr]); 
             if( 1 != sMovementDelta[iBoardAddr].iBoardState)
             {
                 sMovementDelta[iBoardAddr].fXDelta = sMovement.fXDelta;
                 sMovementDelta[iBoardAddr].fYDelta = sMovement.fYDelta;
                 sMovementDelta[iBoardAddr].fZDelta = sMovement.fZDelta;
                 sMovementDelta[iBoardAddr].iBoardState = 1;
-                printf("Movement Inside mutes Board\n");
+                //printf("Movement Inside mutes Board\n");
             }
             pthread_mutex_unlock(&lStrandLock[iBoardAddr]);
         }

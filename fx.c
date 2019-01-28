@@ -78,6 +78,41 @@ int effectMeteor(int iSocket, int broadcast, char * matrix) {
     return 1;
 }
 
+int effectMeteorDown(int iSocket, int broadcast, char * matrix) {
+  int meteorTrailDecay = 64;
+  int meteorRandomDecay = 1;
+  int meteorSize = 10;
+
+    for (int j = 0; j < kLEDCnt; ++j) {
+      matrix[j *3 + 0] = 0x0;
+      matrix[j *3 + 1] = 0x0;
+      matrix[j *3 + 2] = 0x0;
+    }
+
+  for (int j = 0; j < kLEDCnt + kLEDCnt; ++j) {
+      for (int k = 0; k < kLEDCnt; ++k) {
+        if ((!meteorRandomDecay) || ((rand() % 10) > 5)) {
+          fadeToBlack(matrix, k, meteorTrailDecay);
+        }
+      }
+
+      for (int k = 0; k < meteorSize; ++k) {
+        if ((j - k < kLEDCnt) && (j - k >= 0)) {
+          matrix[(j - k) * 3 + 0] = 0xff;
+          matrix[(j - k) * 3 + 1] = 0xff;
+          matrix[(j - k) * 3 + 2] = 0xff;
+        }
+      }
+
+      if (send(iSocket, matrix, kLEDCnt*3, 0) < 0) {
+        fprintf(stderr, "Send failed");
+        return - 1;
+      }
+      usleep(8000);
+  }
+  return 1;
+}
+
 int effectDefault(int iSocket, int broadcast, char * matrix) 
 {
     int pixel = rand() % kLEDCnt;
