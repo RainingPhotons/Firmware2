@@ -56,14 +56,15 @@ struct strand {
   int sock;
   int host;
 };
-
-pthread_mutex_t lStrandLock[20];//TODO, turn it into array
-pthread_t lStrand[20];
-struct MovementDelta_t sMovementDelta[20];
+#define ACTIVE_STRANDS 12
+#define TOTAL_STRANDS 20
+int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19,6,4,17,12,14,15,18,5};
+pthread_mutex_t lStrandLock[TOTAL_STRANDS];//TODO, turn it into array
+pthread_t lStrand[TOTAL_STRANDS];
+struct MovementDelta_t sMovementDelta[TOTAL_STRANDS];
 
 const int iMovementTolaranceXY = 200; //TODO: make it unique per board?
 const int iMovementTolaranceZ = 400; //TODO: make it unique per board?
-#define TOTAL_STRANDS 20
 #define ADDR_PREFIX 200
 
 //Returns socket
@@ -237,7 +238,7 @@ int main()
         tCurrTime = time(NULL);
         iCounter = (tCurrTime - tStartTime);
         int16_t iBoardAddr = (*((int16_t*)(&acBuffer[0]))) - ADDR_PREFIX;
-        if(iBoardAddr >= TOTAL_STRANDS || iBoardAddr < 0)
+        if(iBoardAddr >= 20 || iBoardAddr < 0)
         {
             printf("Board Adress Error. Exiting\n");
             return -1;
@@ -261,19 +262,17 @@ int main()
         asDefaultPosition[iIdx].iZAvg);
     }
     printf("Strand initilization sucessful\n");
-    //TODO: launch thread per strand
+    for(iIdx = 0; iIdx < ACTIVE_STRANDS; iIdx++)
     {
-        struct StrandParam_t sStrandParam4;//TODO: remove this after done
         int *arg = malloc(sizeof(*arg));
-        *arg = 4;
-        sStrandParam4.iBroadcast = iBroadcast;
-        if (pthread_mutex_init(&lStrandLock[sStrandParam4.iBoardAddr], NULL) != 0)
+        *arg = m_aiActiveStrands[iIdx];
+        if (pthread_mutex_init(&lStrandLock[iIdx], NULL) != 0)
         {
             printf("\n mutex init failed\n");
             return -1;
         }
-        printf("Launching thread, %d \n", sStrandParam4.iBoardAddr );
-        iThreadId = pthread_create(&lStrand[sStrandParam4.iBoardAddr], NULL, strand, arg);
+        printf("Launching thread, %d \n",  *arg);
+        iThreadId = pthread_create(&lStrand[iIdx], NULL, strand, arg);
         if(iThreadId)
         {
             printf("Thread create error, %d\n", iThreadId);
@@ -281,30 +280,12 @@ int main()
         }
     }
     
-   {
-        struct StrandParam_t sStrandParam12;//TODO: remove this after done
-        int *arg = malloc(sizeof(*arg));
-        *arg = 12;
-        sStrandParam12.iBroadcast = iBroadcast;
-        if (pthread_mutex_init(&lStrandLock[sStrandParam12.iBoardAddr], NULL) != 0)
-        {
-            printf("\n mutex init failed\n");
-            return -1;
-        }
-                printf("Launching thread, %d \n", sStrandParam12.iBoardAddr );
-        iThreadId = pthread_create(&lStrand[sStrandParam12.iBoardAddr], NULL, strand, arg);
-        if(iThreadId)
-        {
-            printf("Thread create error, %d\n", iThreadId);
-            return -1;
-        }
-    }
     while(1)
     {
         if( 0 >read(iSockfd, (char *)acBuffer, MAXLINE))
             printf("error\n");
         int16_t iBoardAddr = (*((int16_t*)(&acBuffer[0]))) - ADDR_PREFIX;
-        if(iBoardAddr >= TOTAL_STRANDS || iBoardAddr < 0)
+        if(iBoardAddr >= 20 || iBoardAddr < 0)
         {
             printf("Board Adress Error. Exiting\n");
             return -1;
