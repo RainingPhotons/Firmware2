@@ -92,7 +92,7 @@ int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint
 }
 
 int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB, 
-                                    int iRow, int iDropSize,  int iTrailSize) 
+                                    int iRow, int iDropSize,  int iTrailSize, int iRandInt) 
 {
       int iIdx = 0;
       int k;
@@ -219,9 +219,9 @@ int effectRainPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uin
       aRandPixel[1] = matrix[iSparkleLoc * 3 + 1];
       aRandPixel[2] = matrix[iSparkleLoc * 3 + 2];
       
-      matrix[iSparkleLoc * 3 + 0] = 220;
-      matrix[iSparkleLoc * 3 + 1] = 220;
-      matrix[iSparkleLoc * 3 + 2] = 220;
+      matrix[iSparkleLoc * 3 + 0] = aRandPixel[0]<<1;
+      matrix[iSparkleLoc * 3 + 1] = aRandPixel[1]<<1;
+      matrix[iSparkleLoc * 3 + 2] = aRandPixel[2]<<1;
 
       if (send(iSocket, matrix,  (kLEDCnt*3 + 1), 0) < 0) 
       {

@@ -82,7 +82,8 @@ int main(int c, char **v) {
        uB = uB + aaiHueChanges[cHueCountVector][2];
        // printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
        
-       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
+//       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
+              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow, 10, iTrailSize, iRandInt);
        iRow++;
        iRandInt = rand();
        if(iRainStart > 0)
