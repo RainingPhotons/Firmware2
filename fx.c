@@ -1,137 +1,242 @@
+#include <time.h>
 static const int kLEDCnt = 120;
+ #define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })     
 
-struct rgb {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-};
 
-void setPixel(char *led, struct rgb color) {
-    led[0] = color.r;
-    led[1] = color.g;
-    led[2] = color.b;
-}
-
-void fadeToBlack(char *leds, int num, char fadeValue) {
+void fadeToDefault(uint8_t *leds, int num, uint8_t fadeValue, uint8_t cR, uint8_t cG, uint8_t cB) 
+{
     uint8_t r, g, b;
 
     r = leds[num * 3 + 0];
     g = leds[num * 3 + 1];
     b = leds[num * 3 + 2];
 
-    r=(r<=10)? 0 : (int) r-(r*fadeValue/256);
-    g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
-    b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
+    r=(r<=10)? 0 : (uint8_t) r-(r*fadeValue/256);
+    g=(g<=10)? 0 : (uint8_t) g-(g*fadeValue/256);
+    b=(b<=10)? 0 : (uint8_t) b-(b*fadeValue/256);
 
-    leds[num * 3 + 0] = r;
-    leds[num * 3 + 1] = g;
-    leds[num * 3 + 2] = b;
+    leds[(num * 3) + 0] = r;
+    leds[(num * 3) + 1] = g;
+    leds[(num * 3) + 2] = b;
 }
 
-int effectMeteor(int iSocket, int broadcast, char * matrix) {
+int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) 
+{
     int meteorTrailDecay = 64;
-    int meteorRandomDecay = 1;
-    int meteorSize;
-    float rate;
-    struct rgb color;
-    int o,i, j, k;
-    for (j = 0; j < kLEDCnt; ++j) 
-    {
-        int pixel = j * 3;
-        matrix[pixel + 0] = 0x0;
-        matrix[pixel + 1] = 0x0;
-        matrix[pixel + 2] = 0x0;
-    }
-    rate = (rand() % 5 + 5.0) / 10;
-    meteorSize = rand() % 10 + 5;
-    color.r = rand() % 255;
-    color.g = rand() % 255;
-    color.b = rand() % 255;
+    int meteorRandomDecay = 0;
+    int meteorSize = 10;
+    float rate = (rand() % 5 + 5.0) / 10;
 
-    for (o = 0; o < (3 * kLEDCnt) - (30*3); ++o) // minus 10 for slightly earlier finish
+    //for (o = 0; o < (3 * kLEDCnt) - (30*3); ++o) // minus 30 for slightly earlier finish
+    for (int o = 0; o < kLEDCnt + meteorTrailDecay; ++o)
     {
         int j = (int)(rate * o);
         for (int k = 0; k < kLEDCnt; ++k) 
         {
-            if ((!meteorRandomDecay) || ((rand() % 10) > 5)) 
-            {
-                fadeToBlack(matrix, k, meteorTrailDecay);
-            }
+            fadeToDefault(matrix, k, meteorTrailDecay, cR, cG, cB);
         }
 
-        for (k = 0; k < meteorSize; ++k) 
+        for (int k = 0; k < meteorSize; ++k) 
         {
             if ((j - k < kLEDCnt) && (j - k >= 0)) 
             {
-                int pixel = (kLEDCnt - (j - k) - 1) * 3;
-                setPixel(&matrix[pixel], color);
+                matrix[((kLEDCnt - (j - k) - 1) * 3) + 0] = 255;
+                matrix[((kLEDCnt - (j - k) - 1) * 3) + 1] = 255;
+                matrix[((kLEDCnt - (j - k) - 1) * 3 )+ 2] = 255;
             }
         }
 
-        if (send(iSocket, matrix, kLEDCnt*3, 0) < 0) 
+        if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
         {
             fprintf(stderr, "Send failed");
             return -1;
         }
-        usleep(8000);
+        usleep(20000);
     }
     return 1;
 }
 
-int effectMeteorDown(int iSocket, int broadcast, char * matrix) {
+int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) {
   int meteorTrailDecay = 64;
-  int meteorRandomDecay = 1;
+  int meteorRandomDecay = 0;
   int meteorSize = 10;
-
-    for (int j = 0; j < kLEDCnt; ++j) {
-      matrix[j *3 + 0] = 0x0;
-      matrix[j *3 + 1] = 0x0;
-      matrix[j *3 + 2] = 0x0;
-    }
-
-  for (int j = 0; j < kLEDCnt + kLEDCnt; ++j) {
-      for (int k = 0; k < kLEDCnt; ++k) {
-        if ((!meteorRandomDecay) || ((rand() % 10) > 5)) {
-          fadeToBlack(matrix, k, meteorTrailDecay);
-        }
+   
+  for (int j = 0; j < kLEDCnt + meteorTrailDecay; ++j) 
+  {
+      for (int k = 0; k < kLEDCnt; ++k) 
+      {
+          fadeToDefault(matrix, k, meteorTrailDecay, cR, cG, cB);
       }
 
       for (int k = 0; k < meteorSize; ++k) {
         if ((j - k < kLEDCnt) && (j - k >= 0)) {
-          matrix[(j - k) * 3 + 0] = 0xff;
-          matrix[(j - k) * 3 + 1] = 0xff;
-          matrix[(j - k) * 3 + 2] = 0xff;
+          matrix[(j - k) * 3 + 0] = 255;
+          matrix[(j - k) * 3 + 1] = 255;
+          matrix[(j - k) * 3 + 2] = 255;
         }
       }
-
-      if (send(iSocket, matrix, kLEDCnt*3, 0) < 0) {
+      if (send(iSocket, matrix,  (kLEDCnt*3) + 1, 0) < 0) {
         fprintf(stderr, "Send failed");
         return - 1;
       }
-      usleep(8000);
+      usleep(20000);
   }
   return 1;
 }
 
-int effectDefault(int iSocket, int broadcast, char * matrix) 
+int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB, 
+                                    int iRow, int iDropSize,  int iTrailSize) 
 {
-    int pixel = rand() % kLEDCnt;
-    matrix[pixel * 3 + 0] = 0xff;
-    matrix[pixel * 3 + 1] = 0x00;
-    matrix[pixel * 3 + 2] = 0x00;
-    if (send(iSocket, matrix, kLEDCnt*3, 0) < 0) 
-    {
-        fprintf(stderr, "Send failed");
-        return -1;
-    }
+      int iIdx = 0;
+      int k;
+      for (k = 0; k < iDropSize; ++k) 
+      {
+        if ((iRow - k < kLEDCnt) && (iRow - k >= 0)) 
+        {
+          matrix[(iRow - k) * 3 + 0] = min(cR + 200, 255);
+          matrix[(iRow - k) * 3 + 1] = min(cG + 200, 255);
+          matrix[(iRow - k) * 3 + 2] = min(cB + 200, 255);
+        }
+      }
+      for (k = iDropSize; k < iDropSize + iTrailSize; ++k) 
+      {
+          if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
+          {
+              matrix[(iRow - k) * 3 + 0] = min(cR + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = min(cG + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = min(cB + (140 - (47*iIdx)), 255);
+          }
+          iIdx++;
+      }
+      for (k = iDropSize + iTrailSize; k < kLEDCnt; ++k) 
+      {
+          if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
+          {
+              matrix[(iRow - k) * 3 + 0] = cR;//min(cR + (140 - (7*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = cG;//min(cG + (140 - (7*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = cB;//min(cB + (140 - (7*iIdx)), 255);
+          }
+      }
 
-    usleep(2000);
-    matrix[pixel * 3 + 0] = 0x10;
-    matrix[pixel * 3 + 1] = 0x00;
-    matrix[pixel * 3 + 2] = 0x00;
-    if (send(iSocket, matrix, kLEDCnt*3, 0) < 0) 
-    {
+//       printf("j, %d, brightness, %d, %p\n",iRow,matrix[(kLEDCnt*3) - 3], &matrix[(kLEDCnt*3) - 3]);
+      if (send(iSocket, matrix,  (kLEDCnt*3 + 1), 0) < 0) 
+      {
         fprintf(stderr, "Send failed");
-        return -1;
+        return - 1;
+      }
+}
+#define dropOffset 100
+#define dropOffsetDecay 25
+static void getPixel(uint8_t * aPixel, int iDropSize, int iTrailSize, uint8_t cR, uint8_t cG, uint8_t cB, int iRainStart, int iRandInt)
+{
+    switch (iRainStart)
+    {
+        case 6:
+        {
+        aPixel[0] = 255;
+        aPixel[1] = 255;
+        aPixel[2] = 255;
+        break;
+        }
+        case 5 : 
+        {
+        aPixel[0] = min(cR + (dropOffset - (dropOffsetDecay*2)), 255);
+        aPixel[1] = min(cG + (dropOffset - (dropOffsetDecay*2)), 255);
+        aPixel[2] = min(cB + (dropOffset - (dropOffsetDecay*2)), 255);
+        break;
+        }
+        case 4:
+        {
+        aPixel[0] = min(cR + (dropOffset - (dropOffsetDecay*3)), 255);
+        aPixel[1] = min(cG + (dropOffset - (dropOffsetDecay*3)), 255);
+        aPixel[2] = min(cB + (dropOffset - (dropOffsetDecay*3)), 255);
+        break;
+        }
+        case 3:
+        {
+        aPixel[0] = min(cR + (dropOffset - (dropOffsetDecay*4)), 255);
+        aPixel[1] = min(cG + (dropOffset - (dropOffsetDecay*4)), 255);
+        aPixel[2] = min(cB + (dropOffset - (dropOffsetDecay*4)), 255);
+        break;
+        }
+        case 2:
+        {
+        aPixel[0] = min(cR + (dropOffset - (dropOffsetDecay*4)), 255);
+        aPixel[1] = min(cG + (dropOffset - (dropOffsetDecay*4)), 255);
+        aPixel[2] = min(cB + (dropOffset - (dropOffsetDecay*4)), 255);
+         break;
+        }
+        case 1:
+        {
+            if(iRandInt %2)
+            {
+            aPixel[0] = max(cR + (dropOffset - (dropOffsetDecay*5)), 0);
+            aPixel[1] = max(cG + (dropOffset - (dropOffsetDecay*5)), 0);
+            aPixel[2] = max(cB + (dropOffset - (dropOffsetDecay*5)), 0);
+            }
+            else
+            {
+                aPixel[0] = cR>>1;
+                aPixel[1] = cG>>1;
+                aPixel[2] = cB>>1;                
+            }
+   
+        break;
+        }
+        default:
+        aPixel[0] = cR;
+        aPixel[1] = cG;
+        aPixel[2] = cB;
+        break;
     }
 }
+//Sparkly rain
+int effectRainPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB, int iDropSize,  int iTrailSize, int iRainStart, int iRandInt) 
+{
+      int iIdx = 0;
+      uint8_t aPixel[3];
+      uint8_t aRandPixel[3];
+      for (iIdx = kLEDCnt - 1; iIdx > 0; iIdx--) 
+      {
+          matrix[(iIdx * 3) + 0] = matrix[((iIdx - 1) * 3) + 0];
+          matrix[(iIdx * 3) + 1] = matrix[((iIdx - 1) * 3) + 1];
+          matrix[(iIdx * 3) + 2] = matrix[((iIdx - 1) * 3) + 2];
+      }
+      getPixel(aPixel, iDropSize, iTrailSize, cR, cG, cB, iRainStart, iRandInt);
+      matrix[0] = aPixel[0];
+      matrix[1] = aPixel[1];
+      matrix[2] = aPixel[2];
+
+      int iSparkleLoc = iRandInt % kLEDCnt;
+      aRandPixel[0] = matrix[iSparkleLoc * 3 + 0];
+      aRandPixel[1] = matrix[iSparkleLoc * 3 + 1];
+      aRandPixel[2] = matrix[iSparkleLoc * 3 + 2];
+      
+      matrix[iSparkleLoc * 3 + 0] = 220;
+      matrix[iSparkleLoc * 3 + 1] = 220;
+      matrix[iSparkleLoc * 3 + 2] = 220;
+
+      if (send(iSocket, matrix,  (kLEDCnt*3 + 1), 0) < 0) 
+      {
+        fprintf(stderr, "Send failed");
+        return - 1;
+      }
+      usleep(2000);
+      matrix[iSparkleLoc * 3 + 0] = aRandPixel[0];
+      matrix[iSparkleLoc * 3 + 1] = aRandPixel[1];
+      matrix[iSparkleLoc * 3 + 2] = aRandPixel[2];
+//       printf("j, %d, brightness, %d, %p\n",iRow,matrix[(kLEDCnt*3) - 3], &matrix[(kLEDCnt*3) - 3]);
+      if (send(iSocket, matrix,  (kLEDCnt*3 + 1), 0) < 0) 
+      {
+        fprintf(stderr, "Send failed");
+        return - 1;
+      }
+}
+
