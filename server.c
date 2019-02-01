@@ -52,7 +52,6 @@ struct StrandParam_t
 {
     int iBoardAddr;
     int iBoardPhysicalLoc;
-    int iBroadcast;
 };
 
 struct strand {
@@ -234,38 +233,6 @@ int createConnection(int iBoardAddr)
     close(iSocket);
     pthread_exit(NULL);
  }
-
- int createBroadcast() 
- {
-    struct sockaddr_in sServer;
-
-    int iSock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (iSock == -1) 
-    {
-        fprintf(stderr, "Could not create socket");
-        return -1;
-    }
-
-    int iBroadcast = 1;
-    if (setsockopt(iSock, SOL_SOCKET, SO_BROADCAST,
-                 &iBroadcast, sizeof(iBroadcast)) == -1) 
-    {
-        perror("unable to broadcast");
-        return -1;
-    }
-
-    sServer.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    sServer.sin_family = AF_INET;
-    sServer.sin_port = htons(5000);
-
-    if (connect(iSock, (struct sockaddr*)&sServer, sizeof(sServer)) < 0) 
-    {
-        perror("connect failed. Error");
-        return -1;
-    }
-
-    return iSock;
-}
  
 int main() 
 { 
@@ -274,9 +241,7 @@ int main()
     struct sockaddr_in sServaddr; 
     int iIdx;
     int iThreadId;
-    int iBroadcast;
     // Creating socket file descriptor 
-    iBroadcast = createBroadcast();
     if ((iSockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
     { 
         perror("socket creation failed"); 
@@ -382,7 +347,6 @@ int main()
         struct StrandParam_t * psStrandParam = malloc(sizeof(struct StrandParam_t));
         psStrandParam->iBoardAddr = m_aiActiveStrands[iIdx];
         psStrandParam->iBoardPhysicalLoc = iIdx;
-        psStrandParam->iBroadcast = iBroadcast;
         if (pthread_mutex_init(&m_alStrandLock[iIdx], NULL) != 0)
         {
             printf("\n mutex init failed\n");
@@ -484,6 +448,5 @@ int main()
             pthread_mutex_destroy(&m_alStrandLock[iIdx]);
         }
     }
-    close(iBroadcast);
     return 0; 
 } 
