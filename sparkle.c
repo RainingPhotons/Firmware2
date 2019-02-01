@@ -85,14 +85,14 @@ int main(int c, char **v) {
        // printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
        
 //       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
-              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow, iMeteorSize, iMeteorTrailSize, iRandInt);
+              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow/3, iMeteorSize, iMeteorTrailSize, iRandInt);
        iRow++;
        iRandInt = rand();
        if(iRainStart > 0)
            iRainStart --;
        if(0 == (iRandInt % 20))
            iRainStart = iDropSize + iTrailSize;
-       if(iRow>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
+       if((iRow/3)>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
        {
            iRow = 0;
            for (int j = 0; j < kLEDCnt; ++j) 
@@ -103,7 +103,7 @@ int main(int c, char **v) {
             }
        }
        //printf("%d, %d\n", iRow,35000 - min(15000,(iRow * iRow)));
-       usleep(16000);// - min(15000,(iRow * iRow)));
+       usleep(8000);// - min(15000,(iRow * iRow)));
    }
    
   close(strands.sock);

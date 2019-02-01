@@ -117,7 +117,7 @@ int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, u
           iIdx++;
       }
       iIdx = 0;
-      for (k = (iDropSize + iTrailSize - 10) + (iRandInt %10); iIdx < 5 ; ++k)
+      for (k = (iDropSize + iTrailSize - 15) + (iRandInt %15); iIdx < 10 ; ++k)
       {              
           if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
           {
