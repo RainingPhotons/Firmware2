@@ -143,7 +143,7 @@ int createConnection(int iBoardAddr)
         matrix[j *3 + 1] = uG;
         matrix[j *3 + 2] = uB;
     }
-    matrix[kLEDCnt * 3 ] = 100;
+    matrix[kLEDCnt * 3 ] = 50;
     int iRow = 0;
     int iDropSize = 2;
     int iTrailSize = 4;
@@ -181,9 +181,9 @@ int createConnection(int iBoardAddr)
             }
                 for (int j = 0; j < kLEDCnt; ++j) 
                 {
-                    matrix[j *3 + 0] = 0x10;
-                    matrix[j *3 + 1] = 0x0;
-                    matrix[j *3 + 2] = 0x0;
+                    matrix[j *3 + 0] = uR;
+                    matrix[j *3 + 1] = uG;
+                    matrix[j *3 + 2] = uB;
                 }
 
         }
@@ -200,9 +200,9 @@ int createConnection(int iBoardAddr)
             pthread_mutex_unlock(psStrandMutex);
             for (int j = 0; j < kLEDCnt; ++j) 
             {
-                matrix[j *3 + 0] = 0x10;
-                matrix[j *3 + 1] = 0x0;
-                matrix[j *3 + 2] = 0x0;
+                matrix[j *3 + 0] = uR;
+                matrix[j *3 + 1] = uG;
+                matrix[j *3 + 2] = uB;
             }
         }
         else
@@ -219,12 +219,12 @@ int createConnection(int iBoardAddr)
             iRow++;
            if(iRainStart > 0)
                iRainStart --;
-           if(0 == (iRandInt % 20))
+           if(0 == (iRandInt % 8))
                iRainStart = iDropSize + iTrailSize;
            if(iRow>=  kLEDCnt + iDropSize + iTrailSize)
                iRow = 0;
         }
-        usleep(16000);
+        usleep(13000);
         //pthread_mutex_lock(psStrandMutex); 
         uR = m_aiHueColor[iBoardPhysicalLoc][0];
         uG = m_aiHueColor[iBoardPhysicalLoc][1];
@@ -398,7 +398,7 @@ int main()
     }
      time_t secondsStart = time(NULL);
      time_t secondsCurrent = time(NULL);
-    uint8_t uR = 127;
+    uint8_t uR = 126;
     uint8_t uG = 0;
     uint8_t uB = 0;
     uint8_t cHueCountVector = 0;

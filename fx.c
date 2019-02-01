@@ -58,7 +58,7 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
             fprintf(stderr, "Send failed");
             return -1;
         }
-        usleep(20000);
+        usleep(13000);
     }
     return 1;
 }
@@ -86,7 +86,7 @@ int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint
         fprintf(stderr, "Send failed");
         return - 1;
       }
-      usleep(20000);
+      usleep(13000);
   }
   return 1;
 }
@@ -228,7 +228,7 @@ int effectRainPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uin
         fprintf(stderr, "Send failed");
         return - 1;
       }
-      usleep(2000);
+      usleep(3000);
       matrix[iSparkleLoc * 3 + 0] = aRandPixel[0];
       matrix[iSparkleLoc * 3 + 1] = aRandPixel[1];
       matrix[iSparkleLoc * 3 + 2] = aRandPixel[2];
