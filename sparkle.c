@@ -103,7 +103,7 @@ int main(int c, char **v) {
             }
        }
        //printf("%d, %d\n", iRow,35000 - min(15000,(iRow * iRow)));
-       usleep(20000);// - min(15000,(iRow * iRow)));
+       usleep(16000);// - min(15000,(iRow * iRow)));
    }
    
   close(strands.sock);
