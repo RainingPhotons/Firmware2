@@ -170,6 +170,7 @@ int createConnection(int iBoardAddr)
                 printf("%d, A-Setting meteor down to strands, %d, boardNumber, %d\n", iBoardAddr,iIdx, m_aiActiveStrands[iIdx]);
                 m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
                 pthread_mutex_unlock(&m_alStrandLock[iIdx]);
+                usleep(30000);
             }
             for(iIdx = iBoardPhysicalLoc + 1; iIdx<ACTIVE_STRANDS;iIdx++)
             {
@@ -223,7 +224,7 @@ int createConnection(int iBoardAddr)
            if(iRow>=  kLEDCnt + iDropSize + iTrailSize)
                iRow = 0;
         }
-        usleep(13000);
+        usleep(12000);
         //pthread_mutex_lock(psStrandMutex); 
         uR = m_aiHueColor[iBoardPhysicalLoc][0];
         uG = m_aiHueColor[iBoardPhysicalLoc][1];

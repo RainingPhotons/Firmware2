@@ -54,7 +54,7 @@ int main(int c, char **v) {
         matrix[j *3 + 1] = uG;
         matrix[j *3 + 2] = uB;
     }
-    matrix[kLEDCnt * 3] = 50;
+    matrix[kLEDCnt * 3] = 100;
     //effectMeteor(strands.sock,0,matrix, 0x10, 0, 0);
     //effectMeteorDown(strands.sock,0,matrix, 0x10, 0, 0);
     int iRow = 0;
@@ -62,6 +62,8 @@ int main(int c, char **v) {
     int iTrailSize = 4;
     int iRainStart = iDropSize + iTrailSize;
     int iRandInt = rand();
+    int iMeteorSize = 10;
+    int iMeteorTrailSize = 20;
     time_t secondsStart = time(NULL);
    while(1)
    {
@@ -77,23 +79,31 @@ int main(int c, char **v) {
            cHueCountColor --;
        }
 
-       uR = uR + aaiHueChanges[cHueCountVector][0];
-       uG = uG + aaiHueChanges[cHueCountVector][1];
-       uB = uB + aaiHueChanges[cHueCountVector][2];
+       uR = 0;//uR + aaiHueChanges[cHueCountVector][0];
+       uG = 0;//uG + aaiHueChanges[cHueCountVector][1];
+       uB = 0;//uB + aaiHueChanges[cHueCountVector][2];
        // printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
        
 //       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
-              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow, 10, iTrailSize, iRandInt);
+              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow, iMeteorSize, iMeteorTrailSize, iRandInt);
        iRow++;
        iRandInt = rand();
        if(iRainStart > 0)
            iRainStart --;
        if(0 == (iRandInt % 20))
            iRainStart = iDropSize + iTrailSize;
-       if(iRow>=  kLEDCnt + iDropSize + iTrailSize)
+       if(iRow>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
+       {
            iRow = 0;
+           for (int j = 0; j < kLEDCnt; ++j) 
+            {
+                matrix[j *3 + 0] = uR;
+                matrix[j *3 + 1] = uG;
+                matrix[j *3 + 2] = uB;
+            }
+       }
        //printf("%d, %d\n", iRow,35000 - min(15000,(iRow * iRow)));
-       usleep(16000);// - min(15000,(iRow * iRow)));
+       usleep(20000);// - min(15000,(iRow * iRow)));
    }
    
   close(strands.sock);

@@ -100,21 +100,61 @@ int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, u
       {
         if ((iRow - k < kLEDCnt) && (iRow - k >= 0)) 
         {
-          matrix[(iRow - k) * 3 + 0] = min(cR + 200, 255);
-          matrix[(iRow - k) * 3 + 1] = min(cG + 200, 255);
-          matrix[(iRow - k) * 3 + 2] = min(cB + 200, 255);
+          matrix[(iRow - k) * 3 + 0] = 255;
+          matrix[(iRow - k) * 3 + 1] = 255;//min(cG + 200, 255);
+          matrix[(iRow - k) * 3 + 2] = 255;//min(cB + 200, 255);
         }
       }
       for (k = iDropSize; k < iDropSize + iTrailSize; ++k) 
       {
           if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
           {
-              matrix[(iRow - k) * 3 + 0] = min(cR + (140 - (47*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 1] = min(cG + (140 - (47*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 2] = min(cB + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 0] = max(0, 180 - (iIdx * 9));//min(cR + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = max(0, 180 - (iIdx * 9));//min(cG + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = max(0, 180 - (iIdx * 9));//min(cB + (140 - (47*iIdx)), 255);
+              //printf("iRox, %d, iIdx, %d, iVal, %d\n", iRow, iIdx, max(0, 180 - (iIdx * 9)));
           }
           iIdx++;
       }
+      iIdx = 0;
+      for (k = (iDropSize + iTrailSize - 12) + (iRandInt %12); iIdx < 12 ; ++k)
+      {              
+          if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
+          {
+              matrix[(iRow - k) * 3 + 0] = cR;//max(0, 180 - (iIdx * 9));//min(cR + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = cG;//max(0, 180 - (iIdx * 9));//min(cG + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = cB;//max(0, 180 - (iIdx * 9));//min(cB + (140 - (47*iIdx)), 255);
+              //printf("iRox, %d, k, %d\n", iRow, k);
+              
+          }
+          iIdx++;
+      }
+      // for (k = iDropSize + iTrailSize; k < iDropSize + iTrailSize + 10; ++k) 
+      // {
+          // if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
+          // {
+              // matrix[(iRow - k) * 3 + 0] = cR;//min(cR + (140 - (7*iIdx)), 255);
+              // matrix[(iRow - k) * 3 + 1] = cG;//min(cG + (140 - (7*iIdx)), 255);
+              // matrix[(iRow - k) * 3 + 2] = cB;//min(cB + (140 - (7*iIdx)), 255);
+          // }
+      // }
+      // for (; k < iDropSize + iTrailSize + 10; ++k) 
+      // {
+          // if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
+          // {
+              // if(k < iDropSize + iTrailSize + 10)
+              // {
+                  // if(0 == (k + iRandInt)%30)
+                  // {
+                        // matrix[(iRow - k) * 3 + 0] = 100;//min(cR + (140 - (7*iIdx)), 255);
+                        // matrix[(iRow - k) * 3 + 1] = 100;//min(cG + (140 - (7*iIdx)), 255);
+                        // matrix[(iRow - k) * 3 + 2] = 100;//min(cB + (140 - (7*iIdx)), 255);
+                        // printf("iRox, %d, k, %d\n", iRow, k);
+                  // }
+              // }
+          // }
+      // }
+
       for (k = iDropSize + iTrailSize; k < kLEDCnt; ++k) 
       {
           if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
