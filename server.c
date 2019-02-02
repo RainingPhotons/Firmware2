@@ -1,3 +1,5 @@
+#include "fx.h"
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <unistd.h> 
@@ -8,7 +10,6 @@
 #include <netinet/in.h> 
 #include <stdint.h>
 #include <pthread.h>
-#include "fx.c"
 #define MAXLINE 8 
 
 // Driver code 

@@ -1,14 +1,12 @@
-#include <time.h>
-static const int kLEDCnt = 120;
- #define max(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
-#define min(a,b) \
-   ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })     
+#include "fx.h"
 
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <time.h>
+#include <unistd.h>
 
 void fadeToDefault(uint8_t *leds, int num, uint8_t fadeValue, uint8_t cR, uint8_t cG, uint8_t cB) 
 {
