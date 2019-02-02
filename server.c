@@ -77,6 +77,7 @@ struct MovementDelta_t m_asMovementDelta[ACTIVE_STRANDS];
 uint8_t m_aiHueColor[ACTIVE_STRANDS][3];//R,G,B hues
 uint8_t m_aiBrightness[ACTIVE_STRANDS]; //Sync brighness patterns
 //Returns socket
+pthread_barrier_t m_tSync;
 int createConnection(int iBoardAddr) 
 {
     struct sockaddr_in sServer;
@@ -147,7 +148,10 @@ int createConnection(int iBoardAddr)
     int iDropSize = 2;
     int iTrailSize = 4;
     int iRainStart = iDropSize + iTrailSize;
-
+    int iRandInt = rand();
+    int iMeteorSize = 10;
+    int iMeteorTrailSize = 20;
+    
     while(1)
     {
         pthread_mutex_lock(psStrandMutex); 
@@ -161,7 +165,7 @@ int createConnection(int iBoardAddr)
             psStrandMove->fXDelta = 0.0f;
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
-            psStrandMove->iBoardState = 0; // Set the board state to default after this
+            psStrandMove->iBoardState = 2; // Set the board state to default after this
             //Start iterating through other boards and change their status
             pthread_mutex_unlock(psStrandMutex);
              for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
@@ -189,21 +193,40 @@ int createConnection(int iBoardAddr)
         }
         else if (2 == psStrandMove->iBoardState)
         {
-            if(effectMeteorDown(iSocket, matrix, uR,uG, uB) < 0) //TODO change it meteor down
+            if(effectMeteorPartial(iSocket, matrix, iRow/3,iMeteorSize, iMeteorTrailSize, iRandInt) < 0) //TODO change it meteor down
             {
                 printf("Error with meteor effect 2 on strand, %d\n", iBoardAddr);
             }
             psStrandMove->fXDelta = 0.0f;
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
-            psStrandMove->iBoardState = 0; // Set the board state to default after this
-            pthread_mutex_unlock(psStrandMutex);
-            for (int j = 0; j < kLEDCnt; ++j) 
-            {
-                matrix[j *3 + 0] = uR;
-                matrix[j *3 + 1] = uG;
-                matrix[j *3 + 2] = uB;
-            }
+            iRow++;
+           iRandInt = rand();
+
+           if((iRow/3)>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
+           {
+               int iHalt = pthread_barrier_wait(&m_tSync);
+               effectThunder(iSocket, uR, uG, uB, matrix[kLEDCnt * 3]);
+                // if(iHalt == PTHREAD_BARRIER_SERIAL_THREAD) 
+                // {
+
+                      // printf("THUNDER, %d\n", iBoardPhysicalLoc);
+                // }
+                // else if(iHalt != 0) 
+                // {
+                    // printf("Board Loc, %d, barrier sync error\n", iBoardPhysicalLoc);
+                // }
+               iRow = 0;
+               psStrandMove->iBoardState = 0; // Set the board state to default after this
+
+               for (int j = 0; j < kLEDCnt; ++j) 
+                {
+                    matrix[j *3 + 0] = uR;
+                    matrix[j *3 + 1] = uG;
+                    matrix[j *3 + 2] = uB;
+                }
+           }
+           pthread_mutex_unlock(psStrandMutex);
         }
         else
         {
@@ -216,13 +239,10 @@ int createConnection(int iBoardAddr)
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
             pthread_mutex_unlock(psStrandMutex);
-            iRow++;
            if(iRainStart > 0)
                iRainStart --;
            if(0 == (iRandInt % 8))
                iRainStart = iDropSize + iTrailSize;
-           if(iRow>=  kLEDCnt + iDropSize + iTrailSize)
-               iRow = 0;
         }
         usleep(12000);
         //pthread_mutex_lock(psStrandMutex); 
@@ -343,6 +363,7 @@ int main()
     }
     printf("Strand initilization sucessful\n");
     //Launch threads  and initialize mutex for each strand
+    pthread_barrier_init(&m_tSync, NULL, ACTIVE_STRANDS);
     for(iIdx = 0; iIdx < ACTIVE_STRANDS; iIdx++)
     {
         struct StrandParam_t * psStrandParam = malloc(sizeof(struct StrandParam_t));
@@ -391,15 +412,15 @@ int main()
             abs(sMovementTemp.fYDelta) > asDefaultPosition[iBoardPhysicalLoc].iYTolarance || 
             abs(sMovementTemp.fZDelta) > asDefaultPosition[iBoardPhysicalLoc].iZTolarance)
         {
-            printf("Movement Outside mutex: Board, %d, x, %f, y, %f, z, %f, xToll, %d, yToll, %d, zToll, %d\n", iBoardAddr, 
-            sMovementTemp.fXDelta,
-            sMovementTemp.fYDelta,
-            sMovementTemp.fZDelta,
-            asDefaultPosition[iBoardPhysicalLoc].iXTolarance,
-            asDefaultPosition[iBoardPhysicalLoc].iYTolarance,
-            asDefaultPosition[iBoardPhysicalLoc].iZTolarance);
-             pthread_mutex_lock(&m_alStrandLock[iBoardPhysicalLoc]); 
-            if( 1 != m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
+            // printf("Movement Outside mutex: Board, %d, x, %f, y, %f, z, %f, xToll, %d, yToll, %d, zToll, %d\n", iBoardAddr, 
+            // sMovementTemp.fXDelta,
+            // sMovementTemp.fYDelta,
+            // sMovementTemp.fZDelta,
+            // asDefaultPosition[iBoardPhysicalLoc].iXTolarance,
+            // asDefaultPosition[iBoardPhysicalLoc].iYTolarance,
+            // asDefaultPosition[iBoardPhysicalLoc].iZTolarance);
+             // pthread_mutex_lock(&m_alStrandLock[iBoardPhysicalLoc]); 
+            if( 0 == m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
             {
                 m_asMovementDelta[iBoardPhysicalLoc].fXDelta = sMovementTemp.fXDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].fYDelta = sMovementTemp.fYDelta;
@@ -438,7 +459,7 @@ int main()
             m_aiHueColor[iIdx][0] = uR;
             m_aiHueColor[iIdx][1] = uG;
             m_aiHueColor[iIdx][2] = uB;
-            printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
+            //printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
         }   
     }
     close(iSockfd);
