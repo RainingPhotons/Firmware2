@@ -63,7 +63,75 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
     return 1;
 }
 
-int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) {
+int effectThunder(int iSocket) 
+{
+        uint8_t matrix[kLEDCnt * 3 + 1]; //+1 for brightness
+   for (int j = 0; j < kLEDCnt; ++j) 
+    {
+        matrix[j *3 + 0] = 0;
+        matrix[j *3 + 1] = 0;
+        matrix[j *3 + 2] = 0;
+    }
+    matrix[kLEDCnt * 3] = 100;
+    if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
+    {
+        fprintf(stderr, "Send failed");
+        return -1;
+    }
+        usleep(100000);
+    for(int iIdx = 0; iIdx < 10; iIdx++)
+    {
+        for (int j = 0; j < kLEDCnt; ++j) 
+        {
+            matrix[j *3 + 0] = (iIdx * 25);
+            matrix[j *3 + 1] = (iIdx * 25);
+            matrix[j *3 + 2] = (iIdx * 25);
+        }
+            matrix[kLEDCnt * 3] = (iIdx * 25);
+
+        if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
+        {
+            fprintf(stderr, "Send failed");
+            return -1;
+        }
+        usleep(30000);
+    }
+        for (int j = 0; j < kLEDCnt; ++j) 
+    {
+        matrix[j *3 + 0] = 50;
+        matrix[j *3 + 1] = 50;
+        matrix[j *3 + 2] = 50;
+    }
+            matrix[kLEDCnt * 3] = 50;
+    if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
+    {
+        fprintf(stderr, "Send failed");
+        return -1;
+    }
+    usleep(200000);
+
+    for(int iIdx = 0; iIdx < 10; iIdx++)
+    {
+        for (int j = 0; j < kLEDCnt; ++j) 
+        {
+            matrix[j *3 + 0] = 180 - (iIdx * 18);
+            matrix[j *3 + 1] = 180 - (iIdx * 18);
+            matrix[j *3 + 2] = 180 - (iIdx * 18);
+        }
+            matrix[kLEDCnt * 3] = 180 - (iIdx * 18);
+
+        if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
+        {
+            fprintf(stderr, "Send failed");
+            return -1;
+        }
+        usleep(20000);
+    }
+    
+}
+
+int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) 
+{
   int meteorTrailDecay = 64;
   int meteorRandomDecay = 0;
   int meteorSize = 10;

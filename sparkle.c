@@ -94,6 +94,7 @@ int main(int c, char **v) {
            iRainStart = iDropSize + iTrailSize;
        if((iRow/3)>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
        {
+           effectThunder(strands.sock);
            iRow = 0;
            for (int j = 0; j < kLEDCnt; ++j) 
             {
