@@ -79,13 +79,13 @@ int main(int c, char **v) {
            cHueCountColor --;
        }
 
-       uR = 0;//uR + aaiHueChanges[cHueCountVector][0];
-       uG = 0;//uG + aaiHueChanges[cHueCountVector][1];
-       uB = 0;//uB + aaiHueChanges[cHueCountVector][2];
+       uR = uR + aaiHueChanges[cHueCountVector][0];
+       uG = uG + aaiHueChanges[cHueCountVector][1];
+       uB = uB + aaiHueChanges[cHueCountVector][2];
        // printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
        
 //       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
-              effectMeteorPartial(strands.sock,matrix, uR, uG, uB,iRow/3, iMeteorSize, iMeteorTrailSize, iRandInt);
+              effectMeteorPartial(strands.sock,matrix,iRow/3, iMeteorSize, iMeteorTrailSize, iRandInt);
        iRow++;
        iRandInt = rand();
        if(iRainStart > 0)
@@ -94,7 +94,7 @@ int main(int c, char **v) {
            iRainStart = iDropSize + iTrailSize;
        if((iRow/3)>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
        {
-           effectThunder(strands.sock);
+           effectThunder(strands.sock, uR, uG, uB, matrix[kLEDCnt * 3]);
            iRow = 0;
            for (int j = 0; j < kLEDCnt; ++j) 
             {

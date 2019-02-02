@@ -63,7 +63,7 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
     return 1;
 }
 
-int effectThunder(int iSocket) 
+int effectThunder(int iSocket, uint8_t uR, uint8_t uG, uint8_t uB, uint8_t iFinalBrightness) 
 {
         uint8_t matrix[kLEDCnt * 3 + 1]; //+1 for brightness
    for (int j = 0; j < kLEDCnt; ++j) 
@@ -94,7 +94,7 @@ int effectThunder(int iSocket)
             fprintf(stderr, "Send failed");
             return -1;
         }
-        usleep(30000);
+        usleep(35000);
     }
         for (int j = 0; j < kLEDCnt; ++j) 
     {
@@ -127,7 +127,23 @@ int effectThunder(int iSocket)
         }
         usleep(20000);
     }
-    
+    for(int iIdx = 0; iIdx < 20; iIdx++)
+    {
+        for (int j = 0; j < kLEDCnt; ++j) 
+        {
+            matrix[j *3 + 0] = uR;
+            matrix[j *3 + 1] = uG;
+            matrix[j *3 + 2] = uB;
+        }
+            matrix[kLEDCnt * 3] = iIdx * (iFinalBrightness/20);
+
+        if (send(iSocket, matrix, (kLEDCnt*3) + 1, 0) < 0) 
+        {
+            fprintf(stderr, "Send failed");
+            return -1;
+        }
+        usleep(20000);
+    }
 }
 
 int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) 
@@ -159,8 +175,7 @@ int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint
   return 1;
 }
 
-int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB, 
-                                    int iRow, int iDropSize,  int iTrailSize, int iRandInt) 
+int effectMeteorPartial(int iSocket, uint8_t * matrix, int iRow, int iDropSize,  int iTrailSize, int iRandInt) 
 {
       int iIdx = 0;
       int k;
@@ -189,9 +204,9 @@ int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, u
       {              
           if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
           {
-              matrix[(iRow - k) * 3 + 0] = cR;//max(0, 180 - (iIdx * 9));//min(cR + (140 - (47*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 1] = cG;//max(0, 180 - (iIdx * 9));//min(cG + (140 - (47*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 2] = cB;//max(0, 180 - (iIdx * 9));//min(cB + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 0] = 0;//max(0, 180 - (iIdx * 9));//min(cR + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = 0;//max(0, 180 - (iIdx * 9));//min(cG + (140 - (47*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = 0;//max(0, 180 - (iIdx * 9));//min(cB + (140 - (47*iIdx)), 255);
               //printf("iRox, %d, k, %d\n", iRow, k);
               
           }
@@ -227,9 +242,9 @@ int effectMeteorPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, u
       {
           if ((iRow - k < kLEDCnt) && (iRow - k >= 0))
           {
-              matrix[(iRow - k) * 3 + 0] = cR;//min(cR + (140 - (7*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 1] = cG;//min(cG + (140 - (7*iIdx)), 255);
-              matrix[(iRow - k) * 3 + 2] = cB;//min(cB + (140 - (7*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 0] = 0;//min(cR + (140 - (7*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 1] = 0;//min(cG + (140 - (7*iIdx)), 255);
+              matrix[(iRow - k) * 3 + 2] = 0;//min(cB + (140 - (7*iIdx)), 255);
           }
       }
 
