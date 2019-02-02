@@ -28,7 +28,6 @@ void fadeToDefault(uint8_t *leds, int num, uint8_t fadeValue, uint8_t cR, uint8_
 int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) 
 {
     int meteorTrailDecay = 64;
-    int meteorRandomDecay = 0;
     int meteorSize = 10;
     float rate = (rand() % 5 + 5.0) / 10;
 
@@ -142,12 +141,13 @@ int effectThunder(int iSocket, uint8_t uR, uint8_t uG, uint8_t uB, uint8_t iFina
         }
         usleep(20000);
     }
+
+    return 0;
 }
 
 int effectMeteorDown(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t cB) 
 {
   int meteorTrailDecay = 64;
-  int meteorRandomDecay = 0;
   int meteorSize = 10;
    
   for (int j = 0; j < kLEDCnt + meteorTrailDecay; ++j) 
@@ -252,6 +252,8 @@ int effectMeteorPartial(int iSocket, uint8_t * matrix, int iRow, int iDropSize, 
         fprintf(stderr, "Send failed");
         return - 1;
       }
+
+      return 0;
 }
 #define dropOffset 100
 #define dropOffsetDecay 25
@@ -359,5 +361,7 @@ int effectRainPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uin
         fprintf(stderr, "Send failed");
         return - 1;
       }
+
+      return 0;
 }
 

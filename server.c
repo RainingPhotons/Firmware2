@@ -206,7 +206,7 @@ int createConnection(int iBoardAddr)
 
            if((iRow/3)>=  kLEDCnt + iMeteorSize + iMeteorTrailSize)
            {
-               int iHalt = pthread_barrier_wait(&m_tSync);
+               //int iHalt = pthread_barrier_wait(&m_tSync);
                effectThunder(iSocket, uR, uG, uB, matrix[kLEDCnt * 3]);
                 // if(iHalt == PTHREAD_BARRIER_SERIAL_THREAD) 
                 // {
@@ -280,7 +280,6 @@ int main()
         return 0;
     }
     printf("Connection to server sucessful\n");
-    int n, len; 
     
     time_t tStartTime = time(NULL);
     time_t tCurrTime = time(NULL);
