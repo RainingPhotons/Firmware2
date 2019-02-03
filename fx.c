@@ -31,8 +31,7 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
     int meteorSize = 10;
     float rate = (rand() % 5 + 5.0) / 10;
 
-    //for (o = 0; o < (3 * kLEDCnt) - (30*3); ++o) // minus 30 for slightly earlier finish
-    for (int o = 0; o < kLEDCnt + meteorTrailDecay; ++o)
+    for (int o = 0; o < kLEDCnt + meteorTrailDecay + 10; ++o) // + 10 for smoother animation transition between strands
     {
         int j = (int)(rate * o);
         for (int k = 0; k < kLEDCnt; ++k) 

@@ -105,10 +105,22 @@ int createConnection(int iBoardAddr)
     return iSocket;
 }
 
+void *playRain( void *params ) 
+{
+    char command[256];
+    sprintf( command, "aplay -c 1 -q -t wav 401277__inspectorj__rain_lowVolNoFade.wav");
+    int iStatus = 0;
+    while(0 == iStatus)
+    {
+        iStatus = system( command );
+    }
+    pthread_exit(NULL);
+}
+
 void *playThunder( void *params ) 
 {
     char command[256];
-    sleep(5);
+    usleep(5500000);
     sprintf( command, "aplay -c 1 -q -t wav thunderShort.wav" );
 
     system( command );
@@ -129,7 +141,7 @@ void *playThunder( void *params )
     
     struct MovementDelta_t * psStrandMove = &m_asMovementDelta[iBoardPhysicalLoc];
     pthread_mutex_t * psStrandMutex = &m_alStrandLock[iBoardPhysicalLoc];
-    pthread_t stThunder;
+    pthread_t stThunderSound;
     printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
     int iIdx;
@@ -179,10 +191,10 @@ void *playThunder( void *params )
             psStrandMove->iBoardState = 2; // Set the board state to default after this
             //Start iterating through other boards and change their status
             
-           int iThreadId = pthread_create(&stThunder, NULL, playThunder, NULL);
+           int iThreadId = pthread_create(&stThunderSound, NULL, playThunder, NULL);
            if(iThreadId)
            {
-                printf("Thunder thread create error, %d\n", iThreadId);
+                printf("Thunder sound thread create error, %d\n", iThreadId);
            }
             
             pthread_mutex_unlock(psStrandMutex);
@@ -280,6 +292,7 @@ int main()
     struct sockaddr_in sServaddr; 
     int iIdx;
     int iThreadId;
+    pthread_t stRainSound;
     // Creating socket file descriptor 
     if ((iSockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
     { 
@@ -398,6 +411,11 @@ int main()
             printf("Thread create error, %d\n", iThreadId);
             return -1;
         }
+    }
+    iThreadId = pthread_create(&stRainSound, NULL, playRain, NULL);
+    if(iThreadId)
+    {
+        printf("Rain sound thread create error, %d\n", iThreadId);
     }
      time_t secondsStart = time(NULL);
      time_t secondsCurrent = time(NULL);
