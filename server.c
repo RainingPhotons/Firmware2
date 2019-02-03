@@ -105,6 +105,16 @@ int createConnection(int iBoardAddr)
     return iSocket;
 }
 
+void *playThunder( void *params ) 
+{
+    char command[256];
+    sleep(5);
+    sprintf( command, "aplay -c 1 -q -t wav thunderShort.wav" );
+
+    system( command );
+    pthread_exit(NULL);
+}
+
  void *strand(void *params)
  {
     struct StrandParam_t * psStrandParam = (struct StrandParam_t *) params; 
@@ -119,7 +129,7 @@ int createConnection(int iBoardAddr)
     
     struct MovementDelta_t * psStrandMove = &m_asMovementDelta[iBoardPhysicalLoc];
     pthread_mutex_t * psStrandMutex = &m_alStrandLock[iBoardPhysicalLoc];
-    
+    pthread_t stThunder;
     printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
     int iIdx;
@@ -168,6 +178,13 @@ int createConnection(int iBoardAddr)
             psStrandMove->fZDelta = 0.0f;
             psStrandMove->iBoardState = 2; // Set the board state to default after this
             //Start iterating through other boards and change their status
+            
+           int iThreadId = pthread_create(&stThunder, NULL, playThunder, NULL);
+           if(iThreadId)
+           {
+                printf("Thunder thread create error, %d\n", iThreadId);
+           }
+            
             pthread_mutex_unlock(psStrandMutex);
              for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
             {
