@@ -3,7 +3,7 @@ CFLAGS=-Wall -g
 OBJ=fx.o server.o 
 SETUP_OBJ=setup_strands.o
 SOUND_OBJ=sndfile-play.o
-LIBS=-lpthread -lasound -lsndfile
+LIBS=-lpthread 
 
 %.o: %.c
 	$(CC) -c -o $@ $^ $(CFLAGS)

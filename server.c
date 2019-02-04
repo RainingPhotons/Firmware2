@@ -63,7 +63,7 @@ struct strand {
 #define ACTIVE_STRANDS 16
 #define TOTAL_STRANDS 20
 #define ADDR_PREFIX 200
-#define EXTRA_TOL 400
+#define EXTRA_TOL 350
 
 int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19, //[0,3]
                                                                     6,4,17,14,// [4,7]
@@ -109,22 +109,25 @@ int createConnection(int iBoardAddr)
         perror("connect failed. Error");
         return -1;
     }
+        sleep(1);
     if (send(iSocket, caColorSet, sizeof(caColorSet), 0) < 0) 
     {
         fprintf(stderr, "Send failed");
         return -1;
     }
+        sleep(1);
     if (send(iSocket, caAccSet, sizeof(caAccSet), 0) < 0) 
     {
         fprintf(stderr, "Send failed");
         return -1;
     }
+        sleep(1);
     if (send(iSocket, caSampleRateSet, sizeof(caSampleRateSet), 0) < 0) 
     {
         fprintf(stderr, "Send failed");
         return -1;
     }
-    sleep(2);
+    sleep(1);
     return iSocket;
 }
 
@@ -494,11 +497,12 @@ int main()
             pthread_mutex_unlock(&m_alStrandLock[iBoardPhysicalLoc]);
         }
         clock_gettime(CLOCK_MONOTONIC_RAW, &stCurr);
-        uint32_t  uDeltaTime = (abs(stCurr.tv_nsec - stStart.tv_nsec)/10000);
-        //printf("uDeltaTime, %ld\n", uDeltaTime);
+        uint32_t  uDeltaTime = (abs(stCurr.tv_nsec - stStart.tv_nsec)/1000000);
 
         if(uDeltaTime  > 1)
         {    
+            //printf("uDeltaTime, %d\n", uDeltaTime);
+
           clock_gettime(CLOCK_MONOTONIC_RAW, &stStart);
           
           if(cHueCountColor == 1)
@@ -526,7 +530,7 @@ int main()
             m_aiHueColor[iIdx][0] = uR;
             m_aiHueColor[iIdx][1] = uG;
             m_aiHueColor[iIdx][2] = uB;
-            //printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
+            //printf("uDeltaTime %d, cHueCountColor %d, R %d, G %d, B %d\n",uDeltaTime, cHueCountColor,uR,uG,uB);
         }   
     }
     close(iSockfd);
