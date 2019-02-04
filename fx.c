@@ -54,7 +54,7 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
             fprintf(stderr, "Send failed");
             return -1;
         }
-        usleep(13000);
+        usleep(4000);
     }
     return 1;
 }

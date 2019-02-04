@@ -60,21 +60,22 @@ struct strand {
   int host;
 };
 
-#define ACTIVE_STRANDS 16
+#define ACTIVE_STRANDS 20
 #define TOTAL_STRANDS 20
 #define ADDR_PREFIX 200
 #define EXTRA_TOL 350
 
 int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19, //[0,3]
                                                                     6,4,17,14,// [4,7]
-                                                                    15,10, 16,8,//[8,11]
-                                                                    7,0,13,11};//[12,15]
+                                                                    5, 12, 18,2, //[8,11]
+                                                                    15,10, 16,8,//[12,15]
+                                                                    7,0,13,11};//[16,20]
 
-int m_aiStrandsToLoc[TOTAL_STRANDS] = {13, 2, -1, 1,  //[0,3]
-                                                                     5, -1, 4,12 ,   //[4,7]
-                                                                     11, 0, 9, 15, //[8,11]
-                                                                     -1, 14, 7, 8,  //[12,15]
-                                                                    10, 6, -1, 3};  //[16,19]
+int m_aiStrandsToLoc[TOTAL_STRANDS] = {17, 2, 11, 1,  //[0,3]
+                                                                     5, 8, 4,16 ,   //[4,7]
+                                                                     15, 0, 13, 19, //[8,11]
+                                                                     9, 18, 7, 12,  //[12,15]
+                                                                    14, 6, 10, 3};  //[16,19]
 pthread_mutex_t m_alStrandLock[ACTIVE_STRANDS];
 pthread_t m_atStrand[ACTIVE_STRANDS];
 struct MovementDelta_t m_asMovementDelta[ACTIVE_STRANDS];
@@ -88,9 +89,9 @@ int createConnection(int iBoardAddr)
     struct sockaddr_in sServer;
     int iHost = iBoardAddr + ADDR_PREFIX;
     int iSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    char caAccSet[] = "a1";
-    char caSampleRateSet[] = "s16";
-    char caColorSet[] = "b12";
+    //char caAccSet[] = "a1";
+    //char caSampleRateSet[] = "s16";
+    //char caColorSet[] = "b12";
     if (iSocket == -1) 
     {
         fprintf(stderr, "Could not create socket");
@@ -109,25 +110,25 @@ int createConnection(int iBoardAddr)
         perror("connect failed. Error");
         return -1;
     }
-        sleep(1);
-    if (send(iSocket, caColorSet, sizeof(caColorSet), 0) < 0) 
-    {
-        fprintf(stderr, "Send failed");
-        return -1;
-    }
-        sleep(1);
-    if (send(iSocket, caAccSet, sizeof(caAccSet), 0) < 0) 
-    {
-        fprintf(stderr, "Send failed");
-        return -1;
-    }
-        sleep(1);
-    if (send(iSocket, caSampleRateSet, sizeof(caSampleRateSet), 0) < 0) 
-    {
-        fprintf(stderr, "Send failed");
-        return -1;
-    }
-    sleep(1);
+        // sleep(1);
+    // if (send(iSocket, caColorSet, sizeof(caColorSet), 0) < 0) 
+    // {
+        // fprintf(stderr, "Send failed");
+        // return -1;
+    // }
+        // sleep(1);
+    // if (send(iSocket, caAccSet, sizeof(caAccSet), 0) < 0) 
+    // {
+        // fprintf(stderr, "Send failed");
+        // return -1;
+    // }
+        // sleep(1);
+    // if (send(iSocket, caSampleRateSet, sizeof(caSampleRateSet), 0) < 0) 
+    // {
+        // fprintf(stderr, "Send failed");
+        // return -1;
+    // }
+    // sleep(1);
     return iSocket;
 }
 
@@ -146,7 +147,7 @@ void *playRain( void *params )
 void *playThunder( void *params ) 
 {
     char command[256];
-    usleep(5500000);
+    usleep(1000000);
     sprintf( command, "aplay -c 1 -q -t wav thunderShort.wav" );
 
     system( command );
@@ -170,7 +171,6 @@ void *playThunder( void *params )
     pthread_t stThunderSound;
     //printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
-    int iIdx;
     if (iSocket < 0)
     {
         printf("Socket connection failed for strand, %d", iBoardAddr);
@@ -223,21 +223,21 @@ void *playThunder( void *params )
            {
                 printf("Thunder sound thread create error, %d\n", iThreadId);
            }
-            
-             for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
-            {
-                pthread_mutex_lock(&m_alStrandLock[iIdx]);
-                printf("%d, A-Setting meteor down to strands, %d, boardNumber, %d\n", iBoardAddr,iIdx, m_aiActiveStrands[iIdx]);
-                m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
-                pthread_mutex_unlock(&m_alStrandLock[iIdx]);
-            }
-            for(iIdx = iBoardPhysicalLoc + 1; iIdx<ACTIVE_STRANDS;iIdx++)
-            {
-                printf("%d, B-Setting meteor down to strands, %d, boardNumber, %d\n",iBoardAddr, iIdx, m_aiActiveStrands[iIdx]);
-                pthread_mutex_lock(&m_alStrandLock[iIdx]); 
-                m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
-                pthread_mutex_unlock(&m_alStrandLock[iIdx]);
-            }
+            //    int iIdx;
+             // for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
+            // {
+                // pthread_mutex_lock(&m_alStrandLock[iIdx]);
+                // printf("%d, A-Setting meteor down to strands, %d, boardNumber, %d\n", iBoardAddr,iIdx, m_aiActiveStrands[iIdx]);
+                // m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
+                // pthread_mutex_unlock(&m_alStrandLock[iIdx]);
+            // }
+            // for(iIdx = iBoardPhysicalLoc + 1; iIdx<ACTIVE_STRANDS;iIdx++)
+            // {
+                // printf("%d, B-Setting meteor down to strands, %d, boardNumber, %d\n",iBoardAddr, iIdx, m_aiActiveStrands[iIdx]);
+                // pthread_mutex_lock(&m_alStrandLock[iIdx]); 
+                // m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
+                // pthread_mutex_unlock(&m_alStrandLock[iIdx]);
+            // }
                 for (int j = 0; j < kLEDCnt; ++j) 
                 {
                     matrix[j *3 + 0] = uR;
@@ -283,7 +283,7 @@ void *playThunder( void *params )
                 }
            }
            pthread_mutex_unlock(psStrandMutex);
-           usleep(12000);
+           usleep(3000);
 
         }
         else
@@ -486,7 +486,7 @@ int main()
             // asDefaultPosition[iBoardPhysicalLoc].iYTolarance,
             // asDefaultPosition[iBoardPhysicalLoc].iZTolarance);
              // pthread_mutex_lock(&m_alStrandLock[iBoardPhysicalLoc]); 
-            if( 0 == m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
+            if( 1!= m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
             {
                 m_asMovementDelta[iBoardPhysicalLoc].fXDelta = sMovementTemp.fXDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].fYDelta = sMovementTemp.fYDelta;
