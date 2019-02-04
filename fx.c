@@ -350,7 +350,7 @@ int effectRainPartial(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uin
         fprintf(stderr, "Send failed");
         return - 1;
       }
-      usleep(3000);
+      //usleep((iRandInt % 50) * 600);
       matrix[iSparkleLoc * 3 + 0] = aRandPixel[0];
       matrix[iSparkleLoc * 3 + 1] = aRandPixel[1];
       matrix[iSparkleLoc * 3 + 2] = aRandPixel[2];

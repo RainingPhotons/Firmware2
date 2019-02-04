@@ -60,17 +60,21 @@ struct strand {
   int host;
 };
 
-#define ACTIVE_STRANDS 3
+#define ACTIVE_STRANDS 16
 #define TOTAL_STRANDS 20
 #define ADDR_PREFIX 200
-#define EXTRA_TOL 300
+#define EXTRA_TOL 400
 
-int m_aiActiveStrands[ACTIVE_STRANDS] = {18,5,12};//{9,3,1,19,6,4,17,12,14,15,18,5};
-int m_aiStrandsToLoc[TOTAL_STRANDS] = {-1, -1, -1, -1,  //[0,3]
-                                                                     -1, 1, -1, -1,   //[4,7]
-                                                                     -1, -1, -1, -1, //[8,11]
-                                                                     2, -1, -1, -1,  //[12,15]
-                                                                    -1, -1, 0, -1};  //[16,19]
+int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19, //[0,3]
+                                                                    6,4,17,14,// [4,7]
+                                                                    15,10, 16,8,//[8,11]
+                                                                    7,0,13,11};//[12,15]
+
+int m_aiStrandsToLoc[TOTAL_STRANDS] = {13, 2, -1, 1,  //[0,3]
+                                                                     5, -1, 4,12 ,   //[4,7]
+                                                                     11, 0, 9, 15, //[8,11]
+                                                                     -1, 14, 7, 8,  //[12,15]
+                                                                    10, 6, -1, 3};  //[16,19]
 pthread_mutex_t m_alStrandLock[ACTIVE_STRANDS];
 pthread_t m_atStrand[ACTIVE_STRANDS];
 struct MovementDelta_t m_asMovementDelta[ACTIVE_STRANDS];
@@ -84,6 +88,9 @@ int createConnection(int iBoardAddr)
     struct sockaddr_in sServer;
     int iHost = iBoardAddr + ADDR_PREFIX;
     int iSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    char caAccSet[] = "a1";
+    char caSampleRateSet[] = "s16";
+    char caColorSet[] = "b12";
     if (iSocket == -1) 
     {
         fprintf(stderr, "Could not create socket");
@@ -102,6 +109,22 @@ int createConnection(int iBoardAddr)
         perror("connect failed. Error");
         return -1;
     }
+    if (send(iSocket, caColorSet, sizeof(caColorSet), 0) < 0) 
+    {
+        fprintf(stderr, "Send failed");
+        return -1;
+    }
+    if (send(iSocket, caAccSet, sizeof(caAccSet), 0) < 0) 
+    {
+        fprintf(stderr, "Send failed");
+        return -1;
+    }
+    if (send(iSocket, caSampleRateSet, sizeof(caSampleRateSet), 0) < 0) 
+    {
+        fprintf(stderr, "Send failed");
+        return -1;
+    }
+    sleep(2);
     return iSocket;
 }
 
@@ -142,7 +165,7 @@ void *playThunder( void *params )
     struct MovementDelta_t * psStrandMove = &m_asMovementDelta[iBoardPhysicalLoc];
     pthread_mutex_t * psStrandMutex = &m_alStrandLock[iBoardPhysicalLoc];
     pthread_t stThunderSound;
-    printf("Strand address: %d created\n", iBoardAddr);
+    //printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
     int iIdx;
     if (iSocket < 0)
@@ -190,6 +213,7 @@ void *playThunder( void *params )
             psStrandMove->fZDelta = 0.0f;
             psStrandMove->iBoardState = 2; // Set the board state to default after this
             //Start iterating through other boards and change their status
+            pthread_mutex_unlock(psStrandMutex);
             
            int iThreadId = pthread_create(&stThunderSound, NULL, playThunder, NULL);
            if(iThreadId)
@@ -197,14 +221,12 @@ void *playThunder( void *params )
                 printf("Thunder sound thread create error, %d\n", iThreadId);
            }
             
-            pthread_mutex_unlock(psStrandMutex);
              for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
             {
                 pthread_mutex_lock(&m_alStrandLock[iIdx]);
                 printf("%d, A-Setting meteor down to strands, %d, boardNumber, %d\n", iBoardAddr,iIdx, m_aiActiveStrands[iIdx]);
                 m_asMovementDelta[iIdx].iBoardState = (0 == m_asMovementDelta[iIdx].iBoardState) ? 2: m_asMovementDelta[iIdx].iBoardState;
                 pthread_mutex_unlock(&m_alStrandLock[iIdx]);
-                usleep(30000);
             }
             for(iIdx = iBoardPhysicalLoc + 1; iIdx<ACTIVE_STRANDS;iIdx++)
             {
@@ -219,6 +241,7 @@ void *playThunder( void *params )
                     matrix[j *3 + 1] = uG;
                     matrix[j *3 + 2] = uB;
                 }
+            usleep(12000);
 
         }
         else if (2 == psStrandMove->iBoardState)
@@ -257,6 +280,8 @@ void *playThunder( void *params )
                 }
            }
            pthread_mutex_unlock(psStrandMutex);
+           usleep(12000);
+
         }
         else
         {
@@ -269,12 +294,13 @@ void *playThunder( void *params )
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
             pthread_mutex_unlock(psStrandMutex);
+            usleep(((iRandInt % 5) + 1) * 5500);
+
            if(iRainStart > 0)
                iRainStart --;
            if(0 == (iRandInt % 8))
                iRainStart = iDropSize + iTrailSize;
         }
-        usleep(12000);
         //pthread_mutex_lock(psStrandMutex); 
         uR = m_aiHueColor[iBoardPhysicalLoc][0];
         uG = m_aiHueColor[iBoardPhysicalLoc][1];
@@ -293,6 +319,9 @@ int main()
     int iIdx;
     int iThreadId;
     pthread_t stRainSound;
+    srand(time(0));
+    struct timespec stStart, stCurr;
+
     // Creating socket file descriptor 
     if ((iSockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
     { 
@@ -311,8 +340,6 @@ int main()
     }
     printf("Connection to server sucessful\n");
     
-    time_t tStartTime = time(NULL);
-    time_t tCurrTime = time(NULL);
     int iCounter = 0;
     const int iCallibrationTimeOut = 5;
     struct AvgPosition_t asDefaultPosition[ACTIVE_STRANDS];
@@ -336,7 +363,8 @@ int main()
           asDefaultPosition[iIdx].iDiffY = 0;
           asDefaultPosition[iIdx].iDiffZ = 0;
     }
-    
+     time_t tStartTime = time(NULL);
+     time_t tCurrTime = time(NULL);
     printf("Initializing strand position. Wait %d seconds\n", iCallibrationTimeOut);
     while(iCounter < iCallibrationTimeOut)
     {
@@ -417,8 +445,8 @@ int main()
     {
         printf("Rain sound thread create error, %d\n", iThreadId);
     }
-     time_t secondsStart = time(NULL);
-     time_t secondsCurrent = time(NULL);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &stStart);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &stCurr);
     uint8_t uR = 126;
     uint8_t uG = 0;
     uint8_t uB = 0;
@@ -465,11 +493,15 @@ int main()
             }
             pthread_mutex_unlock(&m_alStrandLock[iBoardPhysicalLoc]);
         }
-        secondsCurrent = time(NULL);
-        if(secondsCurrent - secondsStart > 1)
+        clock_gettime(CLOCK_MONOTONIC_RAW, &stCurr);
+        uint32_t  uDeltaTime = (abs(stCurr.tv_nsec - stStart.tv_nsec)/10000);
+        //printf("uDeltaTime, %ld\n", uDeltaTime);
+
+        if(uDeltaTime  > 1)
         {    
-            secondsStart = secondsCurrent;
-            if(cHueCountColor == 1)
+          clock_gettime(CLOCK_MONOTONIC_RAW, &stStart);
+          
+          if(cHueCountColor == 1)
            {
                cHueCountVector += 1;   
                cHueCountColor = 126;
