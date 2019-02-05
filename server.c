@@ -89,9 +89,9 @@ int createConnection(int iBoardAddr)
     struct sockaddr_in sServer;
     int iHost = iBoardAddr + ADDR_PREFIX;
     int iSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    //char caAccSet[] = "a1";
-    //char caSampleRateSet[] = "s16";
-    //char caColorSet[] = "b12";
+    // char caAccSet[] = "a1";
+    // char caSampleRateSet[] = "s16";
+    // char caColorSet[] = "b12";
     if (iSocket == -1) 
     {
         fprintf(stderr, "Could not create socket");
@@ -110,25 +110,29 @@ int createConnection(int iBoardAddr)
         perror("connect failed. Error");
         return -1;
     }
-        // sleep(1);
+     //   sleep(1);
     // if (send(iSocket, caColorSet, sizeof(caColorSet), 0) < 0) 
     // {
         // fprintf(stderr, "Send failed");
         // return -1;
     // }
-        // sleep(1);
+        // usleep(100 * (iBoardAddr % 20));
+    // if(15 != iBoardAddr)
+    // {
     // if (send(iSocket, caAccSet, sizeof(caAccSet), 0) < 0) 
     // {
         // fprintf(stderr, "Send failed");
         // return -1;
     // }
-        // sleep(1);
+        // usleep(100 * (iBoardAddr % 20));
     // if (send(iSocket, caSampleRateSet, sizeof(caSampleRateSet), 0) < 0) 
     // {
         // fprintf(stderr, "Send failed");
         // return -1;
     // }
-    // sleep(1);
+        // usleep(100 * (iBoardAddr % 20));
+        // sleep(1);
+    // }
     return iSocket;
 }
 
@@ -168,7 +172,6 @@ void *playThunder( void *params )
     
     struct MovementDelta_t * psStrandMove = &m_asMovementDelta[iBoardPhysicalLoc];
     pthread_mutex_t * psStrandMutex = &m_alStrandLock[iBoardPhysicalLoc];
-    pthread_t stThunderSound;
     //printf("Strand address: %d created\n", iBoardAddr);
     int iSocket = createConnection(iBoardAddr);
     if (iSocket < 0)
@@ -214,15 +217,10 @@ void *playThunder( void *params )
             psStrandMove->fXDelta = 0.0f;
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
-            psStrandMove->iBoardState = 2; // Set the board state to default after this
+            psStrandMove->iBoardState = 3; // Set the board state to default after this
             //Start iterating through other boards and change their status
             pthread_mutex_unlock(psStrandMutex);
             
-           int iThreadId = pthread_create(&stThunderSound, NULL, playThunder, NULL);
-           if(iThreadId)
-           {
-                printf("Thunder sound thread create error, %d\n", iThreadId);
-           }
             //    int iIdx;
              // for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
             // {
@@ -247,7 +245,7 @@ void *playThunder( void *params )
             usleep(12000);
 
         }
-        else if (2 == psStrandMove->iBoardState)
+        else if ((2 == psStrandMove->iBoardState) || (3 == psStrandMove->iBoardState))
         {
             if(effectMeteorPartial(iSocket, matrix, iRow/3,iMeteorSize, iMeteorTrailSize, iRandInt) < 0) //TODO change it meteor down
             {
@@ -321,7 +319,7 @@ int main()
     struct sockaddr_in sServaddr; 
     int iIdx;
     int iThreadId;
-    pthread_t stRainSound;
+    pthread_t stRainSound, stThunderSound;
     srand(time(0));
     struct timespec stStart, stCurr;
 
@@ -457,6 +455,9 @@ int main()
     uint8_t cHueCountColor = 127;
     int aaiHueChanges[6][3] = {{0, 0,1}, {-1,0,0}, {0,1,0},
                                                 {0,0,-1},{1,0,0},{0,-1,0}};
+    int iGlobalThunderCountdown = 0;//0 == no thunder, 1 = set everyone to global thunder
+     tStartTime = time(NULL);
+     tCurrTime = time(NULL);
     while(1)
     {
         if( 0 >read(iSockfd, (char *)acBuffer, MAXLINE))
@@ -486,19 +487,46 @@ int main()
             // asDefaultPosition[iBoardPhysicalLoc].iYTolarance,
             // asDefaultPosition[iBoardPhysicalLoc].iZTolarance);
              // pthread_mutex_lock(&m_alStrandLock[iBoardPhysicalLoc]); 
-            if( 1!= m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
+            if( 2 != m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
             {
                 m_asMovementDelta[iBoardPhysicalLoc].fXDelta = sMovementTemp.fXDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].fYDelta = sMovementTemp.fYDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].fZDelta = sMovementTemp.fZDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].iBoardState = 1;
+                iGlobalThunderCountdown = 3;
                 //printf("Movement Inside mutes Board\n");
             }
             pthread_mutex_unlock(&m_alStrandLock[iBoardPhysicalLoc]);
         }
         clock_gettime(CLOCK_MONOTONIC_RAW, &stCurr);
         uint32_t  uDeltaTime = (abs(stCurr.tv_nsec - stStart.tv_nsec)/1000000);
-
+        if(iGlobalThunderCountdown)
+        {
+            tCurrTime = time(NULL);
+            if(1 == iGlobalThunderCountdown)
+            {
+               int iThreadId = pthread_create(&stThunderSound, NULL, playThunder, NULL);
+               if(iThreadId)
+               {
+                    printf("Thunder sound thread create error, %d\n", iThreadId);
+               }
+                for(iIdx = 0; iIdx<ACTIVE_STRANDS;iIdx++)
+                {
+                    printf("%d,Setting meteor down to strands, %d\n", iIdx, m_aiActiveStrands[iIdx]);
+                    pthread_mutex_lock(&m_alStrandLock[iIdx]); 
+                    m_asMovementDelta[iIdx].iBoardState = 2;
+                    pthread_mutex_unlock(&m_alStrandLock[iIdx]);
+                }
+                iGlobalThunderCountdown = 0;
+                printf("Thunder\n");
+            }
+            else if ( (tCurrTime - tStartTime) > 1)
+            {
+                tStartTime = time(NULL);
+                iGlobalThunderCountdown -= 1;
+            }
+                
+        }
         if(uDeltaTime  > 1)
         {    
             //printf("uDeltaTime, %d\n", uDeltaTime);
