@@ -37,7 +37,7 @@ int main(int c, char **v) {
     
     int w = 0, h = 0;
     struct strand strands;
-    strands.host = 218;
+    strands.host = 211;
     uint8_t uR = 127;
     uint8_t uG = 0;
     uint8_t uB = 0;
@@ -54,7 +54,7 @@ int main(int c, char **v) {
         matrix[j *3 + 1] = uG;
         matrix[j *3 + 2] = uB;
     }
-    matrix[kLEDCnt * 3] = 100;
+    matrix[kLEDCnt * 3] = 10;
     //effectMeteor(strands.sock,0,matrix, 0x10, 0, 0);
     //effectMeteorDown(strands.sock,0,matrix, 0x10, 0, 0);
     int iRow = 0;
@@ -85,7 +85,8 @@ int main(int c, char **v) {
        // printf("cHueCountVector %d, cHueCountColor %d, R %d, G %d, B %d\n",cHueCountVector, cHueCountColor,uR,uG,uB);
        
 //       effectRainPartial(strands.sock,matrix, uR, uG, uB, iDropSize, iTrailSize, iRainStart, iRandInt);
-              effectMeteorPartial(strands.sock,matrix,iRow/3, iMeteorSize, iMeteorTrailSize, iRandInt);
+              //effectMeteorPartialUP(strands.sock,matrix,kLEDCnt - iRow, iMeteorSize, iMeteorTrailSize, iRandInt);
+        effectMeteorPartialUP(strands.sock, matrix, uR, uG, uB, iRow/3) ;
        iRow++;
        iRandInt = rand();
        if(iRainStart > 0)
@@ -104,7 +105,7 @@ int main(int c, char **v) {
             }
        }
        //printf("%d, %d\n", iRow,35000 - min(15000,(iRow * iRow)));
-       usleep(8000);// - min(15000,(iRow * iRow)));
+       usleep(2000);// - min(15000,(iRow * iRow)));
    }
    
   close(strands.sock);
