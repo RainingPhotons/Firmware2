@@ -64,6 +64,7 @@ struct strand {
 #define TOTAL_STRANDS 20
 #define ADDR_PREFIX 200
 #define EXTRA_TOL 350
+#define BASE_BRIGHTNESS 10
 
 int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19, //[0,3]
                                                                     6,4,17,14,// [4,7]
@@ -195,7 +196,7 @@ void *playThunder( void *params )
         matrix[j *3 + 1] = uG;
         matrix[j *3 + 2] = uB;
     }
-    matrix[kLEDCnt * 3 ] = 50;
+    matrix[kLEDCnt * 3 ] = BASE_BRIGHTNESS;
     int iRow = 0;
     int iDropSize = 2;
     int iTrailSize = 4;
@@ -210,6 +211,7 @@ void *playThunder( void *params )
         
         if (1 == psStrandMove->iBoardState)        
         {
+                matrix[kLEDCnt * 3 ] = 255;
             if(effectMeteor(iSocket, matrix, uR, uG, uB) < 0)
             {
                 printf("Error with meteor effect on strand, %d\n", iBoardAddr);
@@ -217,10 +219,12 @@ void *playThunder( void *params )
             psStrandMove->fXDelta = 0.0f;
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
-            psStrandMove->iBoardState = 3; // Set the board state to default after this
+            psStrandMove->iBoardState = 0; // Set the board state to default after this
             //Start iterating through other boards and change their status
+            matrix[kLEDCnt * 3 ] = BASE_BRIGHTNESS;
             pthread_mutex_unlock(psStrandMutex);
             
+            //effectThunder(iSocket, uR, uG, uB, matrix[kLEDCnt * 3]);
             //    int iIdx;
              // for(iIdx = iBoardPhysicalLoc - 1; iIdx >= 0 ; iIdx--)
             // {
@@ -243,9 +247,8 @@ void *playThunder( void *params )
                     matrix[j *3 + 2] = uB;
                 }
             usleep(12000);
-
         }
-        else if ((2 == psStrandMove->iBoardState) || (3 == psStrandMove->iBoardState))
+        else if (2 == psStrandMove->iBoardState)
         {
             if(effectMeteorPartial(iSocket, matrix, iRow/3,iMeteorSize, iMeteorTrailSize, iRandInt) < 0) //TODO change it meteor down
             {
@@ -281,8 +284,16 @@ void *playThunder( void *params )
                 }
            }
            pthread_mutex_unlock(psStrandMutex);
+           matrix[kLEDCnt * 3 ] = BASE_BRIGHTNESS;
            usleep(3000);
 
+        }
+        else if (3 == psStrandMove->iBoardState)
+        {
+           iRow = 0;
+           psStrandMove->iBoardState = 2; // Set the board state to default after this
+           pthread_mutex_unlock(psStrandMutex);
+           pthread_barrier_wait(&m_tSync);
         }
         else
         {
@@ -295,14 +306,14 @@ void *playThunder( void *params )
             psStrandMove->fYDelta = 0.0f;
             psStrandMove->fZDelta = 0.0f;
             pthread_mutex_unlock(psStrandMutex);
-            usleep(((iRandInt % 5) + 1) * 5500);
+            usleep(((iRandInt % 5) + 1) * 4096);
 
            if(iRainStart > 0)
                iRainStart --;
            if(0 == (iRandInt % 8))
                iRainStart = iDropSize + iTrailSize;
         }
-        //pthread_mutex_lock(psStrandMutex); 
+        matrix[kLEDCnt * 3 ] = BASE_BRIGHTNESS;
         uR = m_aiHueColor[iBoardPhysicalLoc][0];
         uG = m_aiHueColor[iBoardPhysicalLoc][1];
         uB = m_aiHueColor[iBoardPhysicalLoc][2];
@@ -487,7 +498,7 @@ int main()
             // asDefaultPosition[iBoardPhysicalLoc].iYTolarance,
             // asDefaultPosition[iBoardPhysicalLoc].iZTolarance);
              // pthread_mutex_lock(&m_alStrandLock[iBoardPhysicalLoc]); 
-            if( 2 != m_asMovementDelta[iBoardPhysicalLoc].iBoardState)
+            if(m_asMovementDelta[iBoardPhysicalLoc].iBoardState < 2)
             {
                 m_asMovementDelta[iBoardPhysicalLoc].fXDelta = sMovementTemp.fXDelta;
                 m_asMovementDelta[iBoardPhysicalLoc].fYDelta = sMovementTemp.fYDelta;
@@ -512,9 +523,8 @@ int main()
                }
                 for(iIdx = 0; iIdx<ACTIVE_STRANDS;iIdx++)
                 {
-                    printf("%d,Setting meteor down to strands, %d\n", iIdx, m_aiActiveStrands[iIdx]);
                     pthread_mutex_lock(&m_alStrandLock[iIdx]); 
-                    m_asMovementDelta[iIdx].iBoardState = 2;
+                    m_asMovementDelta[iIdx].iBoardState = 3;
                     pthread_mutex_unlock(&m_alStrandLock[iIdx]);
                 }
                 iGlobalThunderCountdown = 0;

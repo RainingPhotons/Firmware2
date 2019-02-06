@@ -43,9 +43,9 @@ int effectMeteor(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG, uint8_t 
         {
             if ((j - k < kLEDCnt) && (j - k >= 0)) 
             {
-                matrix[((kLEDCnt - (j - k) - 1) * 3) + 0] = 255;
-                matrix[((kLEDCnt - (j - k) - 1) * 3) + 1] = 255;
-                matrix[((kLEDCnt - (j - k) - 1) * 3 )+ 2] = 255;
+                matrix[((kLEDCnt - (j - k) - 1) * 3) + 0] = cR<<1;
+                matrix[((kLEDCnt - (j - k) - 1) * 3) + 1] = cG<<1;
+                matrix[((kLEDCnt - (j - k) - 1) * 3 )+ 2] = cB<<1;
             }
         }
 
