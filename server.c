@@ -60,21 +60,21 @@ struct strand {
   int host;
 };
 
-#define ACTIVE_STRANDS 20
-#define TOTAL_STRANDS 20
+#define ACTIVE_STRANDS 21
+#define TOTAL_STRANDS 21
 #define ADDR_PREFIX 200
-#define EXTRA_TOL 350
-#define BASE_BRIGHTNESS 10
+#define EXTRA_TOL 450
+#define BASE_BRIGHTNESS 100
 
 int m_aiActiveStrands[ACTIVE_STRANDS] = {9,3,1,19, //[0,3]
                                                                     6,4,17,14,// [4,7]
                                                                     5, 12, 18,2, //[8,11]
-                                                                    15,10, 16,8,//[12,15]
+                                                                    21,10, 16,8,//[12,15]
                                                                     7,0,13,11};//[16,20]
 
 int m_aiStrandsToLoc[TOTAL_STRANDS] = {17, 2, 11, 1,  //[0,3]
                                                                      5, 8, 4,16 ,   //[4,7]
-                                                                     15, 0, 13, 19, //[8,11]
+                                                                     21, 0, 13, 19, //[8,11]
                                                                      9, 18, 7, 12,  //[12,15]
                                                                     14, 6, 10, 3};  //[16,19]
 pthread_mutex_t m_alStrandLock[ACTIVE_STRANDS];

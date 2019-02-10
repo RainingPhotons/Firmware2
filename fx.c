@@ -63,7 +63,7 @@ int effectMeteorPartialUP(int iSocket, uint8_t * matrix, uint8_t cR, uint8_t cG,
 {
     int meteorTrailDecay = 30;
     int meteorSize = 10;
-    float rate = (rand() % 5 + 5.0) / 10;
+    //float rate = (rand() % 5 + 5.0) / 10;
 
     {
         int j =  iRow;
