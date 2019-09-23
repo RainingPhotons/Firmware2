@@ -5,7 +5,7 @@ SETUP_OBJ=setup_strands.o
 SOUND_OBJ=sndfile-play.o
 LIBS=-lpthread -lsndfile -lasound
 
-all: lights setup_strands play_audio
+all: lights setup_strands play_audio ordering
 
 %.o: %.c
 	$(CC) -c -o $@ $^ $(CFLAGS)
@@ -19,7 +19,10 @@ setup_strands: $(SETUP_OBJ)
 play_audio: $(SOUND_OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
+ordering: ordering.o
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
 .PHONY: clean
 
 clean:
-	rm -f *.o lights setup_strands play_audio
+	rm -f *.o lights setup_strands play_audio ordering
