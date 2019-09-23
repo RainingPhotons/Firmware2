@@ -3,7 +3,9 @@ CFLAGS=-Wall -g
 OBJ=fx.o server.o 
 SETUP_OBJ=setup_strands.o
 SOUND_OBJ=sndfile-play.o
-LIBS=-lpthread 
+LIBS=-lpthread -lsndfile -lasound
+
+all: lights setup_strands play_audio
 
 %.o: %.c
 	$(CC) -c -o $@ $^ $(CFLAGS)
@@ -20,4 +22,4 @@ play_audio: $(SOUND_OBJ)
 .PHONY: clean
 
 clean:
-	rm -f *.o lights 
+	rm -f *.o lights setup_strands play_audio
