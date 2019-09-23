@@ -10,6 +10,7 @@
 
 const int kServerSocket = 5002;
 const int kMaxLine = 8;
+const float kDivisor = 819.0;
 
 volatile int loop = 1;
 
@@ -19,12 +20,21 @@ void sigintHandler(int sig_num) {
     loop = 0;
 }
 
-int main(int c, char **v) {
-    int sockfd;
-    struct sockaddr_in serv_addr;
+int main(int argc, char **argv) {
+    int c;
+    int float_display = 0;
+
+    while ((c = getopt(argc, argv, "f")) != -1) {
+        switch (c) {
+            case 'f':
+                float_display = 1;
+                break;
+        }
+    }
 
     signal(SIGINT, sigintHandler); 
 
+    int sockfd;
     // Open connection to listen to the strands
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
         perror("socket creation failed"); 
@@ -45,6 +55,7 @@ int main(int c, char **v) {
         exit(EXIT_FAILURE);
     }
 
+    struct sockaddr_in serv_addr;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_family = AF_INET; 
     serv_addr.sin_port = htons(kServerSocket); 
@@ -65,8 +76,14 @@ int main(int c, char **v) {
             }
         } else {
             int16_t *data = (int16_t*)buffer;
-            printf("board = %4d : %4d, %4d, %4d\n",
-                data[0], data[1], data[2], data[3]);
+            if (float_display) {
+                printf("board = %4d : %lf, %lf, %lf\n",
+                    data[0], data[1] / kDivisor, data[2] / kDivisor,
+                    data[3] / kDivisor);
+            } else {
+                printf("board = %4d : %4d, %4d, %4d\n",
+                    data[0], data[1], data[2], data[3]);
+            }
             fflush(stdout);
         }
     }
