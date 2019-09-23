@@ -20,14 +20,50 @@ void sigintHandler(int sig_num) {
     loop = 0;
 }
 
+int createConnection(int *sock, int host) {
+  struct sockaddr_in server;
+
+  *sock = socket(AF_INET, SOCK_DGRAM, 0);
+  if (*sock == -1) {
+    fprintf(stderr, "Could not create socket");
+    return 0;
+  }
+
+  char addr[32];
+  sprintf(addr, "192.168.1.%d", host);
+  server.sin_addr.s_addr = inet_addr(addr);
+  server.sin_family = AF_INET;
+  server.sin_port = htons(5000);
+
+  if (connect(*sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+    perror("connect failed. Error");
+    return 0;
+  }
+
+  return 1;
+}
+
+void send_cmd(int sock, char const *buffer) {
+  if (send(sock, buffer, strlen(buffer), 0) < 0) {
+    fprintf(stderr, "Send failed");
+  }
+  usleep(10000);
+}
+
+
 int main(int argc, char **argv) {
     int c;
     int float_display = 0;
+    int accelerometer_output = 0;
 
-    while ((c = getopt(argc, argv, "f")) != -1) {
+    while ((c = getopt(argc, argv, "fa")) != -1) {
         switch (c) {
             case 'f':
+                accelerometer_output = 1;
                 float_display = 1;
+                break;
+            case 'a':
+                accelerometer_output = 1;
                 break;
         }
     }
@@ -76,15 +112,31 @@ int main(int argc, char **argv) {
             }
         } else {
             int16_t *data = (int16_t*)buffer;
-            if (float_display) {
-                printf("board = %4d : %lf, %lf, %lf\n",
-                    data[0], data[1] / kDivisor, data[2] / kDivisor,
-                    data[3] / kDivisor);
-            } else {
-                printf("board = %4d : %4d, %4d, %4d\n",
-                    data[0], data[1], data[2], data[3]);
+            // TODO(fritz) : do some error checking to make sure this
+            // is a valid board
+            int board = data[0];
+
+            if (accelerometer_output) {
+                if (float_display) {
+                    printf("board = %4d : %lf, %lf, %lf\n",
+                        board, data[1] / kDivisor, data[2] / kDivisor,
+                        data[3] / kDivisor);
+                } else {
+                    printf("board = %4d : %4d, %4d, %4d\n",
+                        board, data[1], data[2], data[3]);
+                }
+                fflush(stdout);
             }
-            fflush(stdout);
+            // Y is pointing down, X and Z are to the side
+            // if Y goes close to 0, then the board is horizontal
+            int32_t y = data[2];
+            if (y < 256 && y > -256) {
+                printf("board %d is horizontal\n", board);
+                int sock;
+                createConnection(&sock, board);
+                send_cmd(sock, "b100");
+                close(sock);
+            }
         }
     }
 }
