@@ -10,6 +10,7 @@
 
 const int kServerSocket = 5002;
 const int kMaxLine = 8;
+const int kMaxStrands = 64;
 const float kDivisor = 819.0;
 
 volatile int loop = 1;
@@ -101,6 +102,13 @@ int main(int argc, char **argv) {
     }
     printf("Connection to server sucessful!\n");
 
+    int32_t last_board = -1;
+    int32_t ordering[kMaxStrands];
+    int32_t cnt = 1;
+    for (int i = 0; i < kMaxStrands; ++i) {
+        ordering[i] = -1;
+    }
+
     while (loop == 1) {
         char buffer[kMaxLine];
         int fd_read = read(sockfd, buffer, kMaxLine);
@@ -131,12 +139,29 @@ int main(int argc, char **argv) {
             // if Y goes close to 0, then the board is horizontal
             int32_t y = data[2];
             if (y < 256 && y > -256) {
-                printf("board %d is horizontal\n", board);
+                last_board = board;
                 int sock;
                 createConnection(&sock, board);
                 send_cmd(sock, "b100");
                 close(sock);
+                if (ordering[cnt - 1] != board) {
+                    printf("board %d is detected\n", board);
+                    ordering[cnt] = board;
+                    cnt++;
+                }
+            } else if (last_board == board) {
+                last_board = -1;
+                int sock;
+                createConnection(&sock, board);
+                send_cmd(sock, "b0");
+                close(sock);
             }
         }
+    }
+
+    for (int i = 1; i < kMaxStrands; i++) {
+        if (ordering[i] == -1)
+            break;
+        printf("%d\n", ordering[i]);
     }
 }
