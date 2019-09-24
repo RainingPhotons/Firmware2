@@ -37,12 +37,22 @@ void send_cmd(int sock, char *buffer) {
   usleep(10000);
 }
 
-int main(int c, char **v) {
-  char cmd_buffer[256];
+int main(int argc, char **argv) {
+  int c;
+  int pause = 0;
 
+  while ((c = getopt(argc, argv, "p")) != -1) {
+    switch (c) {
+      case 'p':
+        pause = 1;
+        break;
+    }
+  }
+
+  char cmd_buffer[256];
   uint32_t sample_rate = 16;
 
-  for (int i = 0; i < kStrandCnt; ++i) {
+  for (int i = 0; i <= kStrandCnt; ++i) {
     int sock;
     printf("%d\n", i);
     createConnection(&sock, i + 200);
@@ -60,7 +70,10 @@ int main(int c, char **v) {
     send_cmd(sock, cmd_buffer);
 
     // pause
-    getchar();
+    if (pause)
+      getchar();
+    else
+      sleep(1);
 
     // Clear the strand
     sprintf(cmd_buffer, "r0");
