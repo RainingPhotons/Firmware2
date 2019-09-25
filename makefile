@@ -1,16 +1,18 @@
 CC=gcc
 CFLAGS=-Wall -g
-OBJ=fx.o server.o 
-SETUP_OBJ=setup_strands.o
-SOUND_OBJ=sndfile-play.o
+OBJDIR=obj
+OBJ=$(addprefix $(OBJDIR)/, fx.o server.o)
+SETUP_OBJ=$(addprefix $(OBJDIR)/, setup_strands.o)
+SOUND_OBJ=$(addprefix $(OBJDIR)/, sndfile-play.o)
+ORDERING_OBJ=$(addprefix $(OBJDIR)/, ordering.o)
 LIBS=-lpthread -lsndfile -lasound
 
 all: lights setup_strands play_audio ordering
 
-%.o: %.c
+$(OBJDIR)/%.o: %.c
 	$(CC) -c -o $@ $^ $(CFLAGS)
 
-lights: $(OBJ)
+lights: $(OBJ) fx.h
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 setup_strands: $(SETUP_OBJ)
@@ -19,10 +21,10 @@ setup_strands: $(SETUP_OBJ)
 play_audio: $(SOUND_OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
-ordering: ordering.o
+ordering: $(ORDERING_OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 .PHONY: clean
 
 clean:
-	rm -f *.o lights setup_strands play_audio ordering
+	rm -f $(OBJDIR)/*.o lights setup_strands play_audio ordering
