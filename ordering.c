@@ -56,8 +56,9 @@ int main(int argc, char **argv) {
     int c;
     int float_display = 0;
     int accelerometer_output = 0;
+    char* output_file = NULL;
 
-    while ((c = getopt(argc, argv, "fa")) != -1) {
+    while ((c = getopt(argc, argv, "faw:")) != -1) {
         switch (c) {
             case 'f':
                 accelerometer_output = 1;
@@ -66,6 +67,8 @@ int main(int argc, char **argv) {
             case 'a':
                 accelerometer_output = 1;
                 break;
+            case 'w':
+                output_file = optarg;
         }
     }
 
@@ -159,9 +162,19 @@ int main(int argc, char **argv) {
         }
     }
 
+    FILE *fp;
+    if (output_file) {
+        fp = fopen(output_file, "w");
+    }
     for (int i = 1; i < kMaxStrands; i++) {
         if (ordering[i] == -1)
             break;
+        if (fp)
+            fprintf(fp, "%d\n", ordering[i]);
         printf("%d\n", ordering[i]);
     }
+    if (fp)
+        fclose(fp);
+
+    return 0;
 }
